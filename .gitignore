@@ -1,6 +1,5 @@
 
 \.build/
 \.vscode/
-\.code-workspace/
-
+*.code-workspace
 *.bak

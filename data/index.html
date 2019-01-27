@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Settings</title>
+    <title>FHaTbadge</title>
 <!-- 		Copyright 2019, Tilden Groves.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,33 +17,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">    
+    <meta name="viewport" content="width=device-width, height=device-height, user-scalable=yes">
+	<link href="favicon.ico" rel="shortcut icon">
     <style>
-    body{
-     background-color: #000;
-	 background-image: url("images/background.jpg");
-	 background-repeat: no-repeat;
-     background-attachment: fixed;
-     background-position: center; 
-	 background-size: auto 100%;
-	 width: 100%;
-	 height: 100%;
-	 color: white;
-     font-size: 20px;
-     text-shadow: 2px 2px Black;
+    body{margin: auto;
+		background-color: #333;
+		background-image: url("img/HSAFL.png");
+		width: 100%;
+		height: 100%;
+		color: white;
+		font-size: 20px;
+		text-shadow: 2px 2px Black;
     }
+
+    #headline{
+        background-color: rgba(50, 50, 50, 0.85);
+        text-shadow: 2px 2px black;
+    }
+
+  t2{
+	  font-size:22pt;
+  }
     </style>
   </head>
   <body>
-  <table style="position:absolute;width:100%;top: 31%;"><tr><th style="width:31%"></th>
-    <th style="width:33%"><span><form action='/' method='POST'><br>
-  SSID(Network Name):<br><input type='text' name='NAME' placeholder='Network name'><br>
-  <br>
-  Password:<br>
-  <input type='text' name='PASSWORD' placeholder='Password'><br><br>
-  <input type='submit' name='SUBMITNEWAP' value='Submit'></form><br></span></th>
-    <th style="width:33%"></th>
+  <br><br><br><br><br><br>
+  <table style="width:100%;"><tr>
+    <th style="width:33%"></th><th><a href="LedMatrix.html"><button style="width:100%;height:50px;">LED Matrix Editor</button></a></th><th style="width:33%"></th></tr>
+    <tr><th style="width:33%"></th><th><a href="WifiSettings.html"><button style="width:100%;height:50px;">Wifi Settings</button></a></th><th style="width:33%"></th>
     </tr>
     </table>
-</body>
-</html>
+  </body></html>
