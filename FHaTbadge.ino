@@ -1,21 +1,17 @@
 /*
 MIT License
 
-
 Copyright (c) 2019, Tilden Groves
 
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to dea
+of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -42,11 +38,11 @@ const char* passwordForAP = "home_network_password";    // home network password
 
 // ESP8266 name
 const char* ESP8266Name = "esp8266";
-// use http://esp8266.local to connect to webpage in your browser (may not work in EDGE)
+// use http://esp8266.local to connect to webpage in your browser (may not work in EDGE or android devices)
 
 // name and password for connecting to ESP8266 as an Accesspoint
-const char *password = "12345678";   // This is the Wifi Password (only numbers and letters,  not . , |)
-const char *AP_Name = "ESP8266WSOTA";// This is the Wifi Name(SSID), some numbers will be added for clarity (mac address)
+const char *password = "12345678";  // This is the Wifi Password (only numbers and letters,  not . , |)
+const char *AP_Name = "FHaTbadge";  // This is the Wifi Name(SSID), some numbers will be added for clarity (mac address)
 
 ESP8266WebServer server(80);
 DNSServer dnsServer;
