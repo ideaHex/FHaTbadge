@@ -31,6 +31,8 @@ SOFTWARE.
 #include "WebFiles.h"
 #include <ArduinoOTA.h>
 #include "OTAHandler.h"
+#include "LEDMatrix.h"
+#include "Config.h"
 
 // name and password for home network
 const char* ssidForAP = "home_network_name";            // home network name
@@ -47,18 +49,28 @@ const char *AP_Name = "FHaTbadge";  // This is the Wifi Name(SSID), some numbers
 ESP8266WebServer server(80);
 DNSServer dnsServer;
 HandleTheOTA otaHandler(&dnsServer,AP_Name,password);
+LEDMatrix matrix;
 
 void setup(){
+    pinMode(SW1_Pin,INPUT_PULLUP);
+    pinMode(SW2_Pin,INPUT_PULLUP);
+    pinMode(SW3_Pin,INPUT_PULLUP);
+
+    matrix.clearMatrix();
+
     Serial.begin(115200);
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
+    Serial.println(F("\r\nSetup Complete"));
+    setupMatrix();
 }
 
 void loop(){
     delay(1);                       // power saving in station mode drops power usage.
     ArduinoOTA.handle();            // handle OTA update requests
     dnsServer.processNextRequest(); // maintain DNS server
-    server.handleClient();          // handle client requests 
+    server.handleClient();          // handle client requests
+    //matrix.T1IntHandler();
 }
 
 void setupWiFi(){
@@ -81,6 +93,7 @@ void setupWiFi(){
 
 // server callbacks
 void handleRoot(){
+  disableTimer();
   if (server.hasArg("NAME") && server.arg("NAME") != "" && server.arg("PASSWORD") != "")
   {
     sendFile("/restarting.html", &server);
@@ -92,8 +105,32 @@ void handleRoot(){
   {
     sendFile(server.uri(), &server);
   }
+  enableTimer();
 }
 
 void handleNotFound(){
+  disableTimer();
 	sendFile(server.uri(),&server);
+  enableTimer();
 }
+
+void setupMatrix(){
+    matrix.ticks = clockCyclesPerMs / frequency;
+    disableTimer();
+		enableTimer();
+}
+void disableTimer(){
+    timer1_disable();
+		timer1_detachInterrupt();
+}
+
+void enableTimer(){
+    timer1_isr_init();
+		timer1_attachInterrupt(T1IntHandler);
+		timer1_enable(TIM_DIV1, TIM_EDGE, TIM_LOOP);
+		timer1_write(matrix.ticks); // ticks before interrupt fires, maximum ticks 8388607
+}
+
+ICACHE_RAM_ATTR void T1IntHandler(){
+      matrix.T1IntHandler();
+    }
