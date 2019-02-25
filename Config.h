@@ -28,7 +28,6 @@ SOFTWARE.
     uint8_t SW2_Pin = D2;
     uint8_t SW3_Pin = D3;
 
-    unsigned long frequency = 32000;
+    unsigned long frequency = 2300; // 2300 works well with wifi // can do 6400 but effects wifi speed
     unsigned long clockCyclesPerMs = ESP.getCpuFreqMHz()*1000000;
 
-    

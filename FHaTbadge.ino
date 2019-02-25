@@ -33,6 +33,7 @@ SOFTWARE.
 #include "OTAHandler.h"
 #include "LEDMatrix.h"
 #include "Config.h"
+#include <Ticker.h>
 
 // name and password for home network
 const char* ssidForAP = "home_network_name";            // home network name
@@ -50,6 +51,9 @@ ESP8266WebServer server(80);
 DNSServer dnsServer;
 HandleTheOTA otaHandler(&dnsServer,AP_Name,password);
 LEDMatrix matrix;
+Ticker testTicker;
+int testVeriable=0;
+Ticker animationTimer;
 
 void setup(){
     pinMode(SW1_Pin,INPUT_PULLUP);
@@ -57,35 +61,64 @@ void setup(){
     pinMode(SW3_Pin,INPUT_PULLUP);
 
     matrix.clearMatrix();
-
     Serial.begin(115200);
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
     Serial.println(F("\r\nSetup Complete"));
     setupMatrix();
+    //testTicker.attach_ms(800,test);//TODO: Delete this, its for testing only
+    //test();
+    scrollTest("HackerSpace Adelaide",70);
+    rst_info *resetInfo;
+    resetInfo = ESP.getResetInfoPtr();
+    Serial.print((*resetInfo).reason);
+
+ //REASON_DEFAULT_RST = 0, /* normal startup by power on */
+ //REASON_WDT_RST = 1, /* hardware watch dog reset */
+ //REASON_EXCEPTION_RST = 2, /* exception reset, GPIO status won't change */
+ //REASON_SOFT_WDT_RST   = 3, /* software watch dog reset, GPIO status won't change */
+ //REASON_SOFT_RESTART = 4, /* software restart ,system_restart , GPIO status won't change */
+ //REASON_DEEP_SLEEP_AWAKE = 5, /* wake up from deep-sleep */
+ //REASON_EXT_SYS_RST      = 6 /* external system reset */
+    Serial.println(": Reset Reason: " + ESP.getResetReason());
+    Serial.println(ESP.getResetInfo());
+    Serial.println("VCC: " + ESP.getVcc());
+ 
 }
 
 void loop(){
-    delay(1);                       // power saving in station mode drops power usage.
-    ArduinoOTA.handle();            // handle OTA update requests
-    dnsServer.processNextRequest(); // maintain DNS server
-    server.handleClient();          // handle client requests
-    //matrix.T1IntHandler();
+    delay(1);                         // power saving in station mode drops power usage.
+    ArduinoOTA.handle();              // handle OTA update requests.
+    ArduinoOTA.onStart(disableTimer); // disable screen updates if there is an update in progress.
+    dnsServer.processNextRequest();   // maintain DNS server.
+    server.handleClient();            // handle client requests.
 }
-
+void test(){
+  matrix.setMatrix(matrixFont[testVeriable],0);
+  testVeriable++;
+  if (testVeriable>fontLength-1)testVeriable=0;
+}
+void scrollTest(String text,unsigned long frameDelay){
+  matrix.text = text;
+  animationTimer.detach();
+  animationTimer.attach_ms(frameDelay,animationCallback);
+}
+void animationCallback(){
+  matrix.scroll();
+}
 void setupWiFi(){
     WiFi.mode(WIFI_STA);
-    if (SPIFFS.exists("/APData.csv")){// check to see if theres any data from the last AP change
+    if (SPIFFS.exists("/APData.csv")){        // check to see if theres any data from the last AP change
         otaHandler.loadDatafile(ESP8266Name);
-    }else{//No Saved data File, load defaults
-        WiFi.begin(ssidForAP, passwordForAP);// connect to home Accesspoint(Wifi)
+    }else{                                    //No Saved data File, load defaults
+        WiFi.begin(ssidForAP, passwordForAP); // connect to home Accesspoint(Wifi)
         WiFi.hostname(ESP8266Name);
     }
     otaHandler.connectToAP();
     ArduinoOTA.setHostname(ESP8266Name);
     ArduinoOTA.begin();
 
-    // setup server callbacks                 
+  // setup server callbacks                 
 	server.on("/", handleRoot);
 	server.onNotFound(handleNotFound);
 	server.begin();
@@ -113,7 +146,7 @@ void handleNotFound(){
 	sendFile(server.uri(),&server);
   enableTimer();
 }
-
+// timer functions
 void setupMatrix(){
     matrix.ticks = clockCyclesPerMs / frequency;
     disableTimer();
@@ -122,6 +155,7 @@ void setupMatrix(){
 void disableTimer(){
     timer1_disable();
 		timer1_detachInterrupt();
+    matrix.clearMatrix();
 }
 
 void enableTimer(){
