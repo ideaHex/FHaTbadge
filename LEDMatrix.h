@@ -60,7 +60,7 @@ class LEDMatrix{
 
         volatile uint8_t currentRow = 0;
         const uint8_t Latch = D8;
-        uint8_t rowMask[8];
+        uint16_t rowMask[8];
         volatile int currentBrightness = 0;
         volatile int brightnessCount = 0;
         uint64_t currentMatrix[8];//Each segment of this array will contain different brightness data,

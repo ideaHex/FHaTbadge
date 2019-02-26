@@ -33,22 +33,21 @@ SOFTWARE.
         SPI.beginTransaction(SPISettings(39000000,MSBFIRST,SPI_MODE0));// get bit errors above 39MHZ
 
         for(int a=0;a<8;a++){
-            rowMask[a]=B11111111 ^ (1<<a);
-        }
-
-        for (int a=0;a<8;a++){
+            rowMask[a]=65280 ^ (1<<a+8);
             currentMatrix[a] = 0;
         }
-        clearMatrix();
 
+        clearMatrix();
     }
     void LEDMatrix::clearMatrix(){
             fastDigitalWrite(Latch, LOW);
             SPI.write(B00000000);
             SPI.write(B11111111);
             fastDigitalWrite(Latch, HIGH);
-            // Wifi symbol
-            //0x181818422499423c
+            // switch back to 16 bit mode
+            const uint32_t mask = ~((SPIMMOSI << SPILMOSI) | (SPIMMISO << SPILMISO));
+            SPI1U1 = ((SPI1U1 & mask) | ((15 << SPILMOSI) | (15 << SPILMISO)));
+            // Wifi symbol 0x181818422499423c
     }
     ICACHE_RAM_ATTR void LEDMatrix::fastDigitalWrite(int pin,bool State){
 	    if (State){
@@ -59,11 +58,19 @@ SOFTWARE.
     }
     ICACHE_RAM_ATTR void LEDMatrix::T1IntHandler(){
             
-            byte row = (currentMatrix[currentBrightness] >> (currentRow * 8)) & 0xFF;
-            fastDigitalWrite(Latch, LOW);
+            uint16_t row = (currentMatrix[currentBrightness] >> (currentRow * 8)) & 0xFF;
+
+            /* Equal to 
             SPI.write(row);
             SPI.write(rowMask[currentRow]);
-            fastDigitalWrite(Latch, HIGH);
+            but saves 2 whiles and 1 SPI1CMD |= SPIBUSY;
+            */
+            GPOC = (1 << Latch);// Latch LOW
+            SPI1W0 = (rowMask[currentRow] | row);
+            SPI1CMD |= SPIBUSY;
+            while(SPI1CMD & SPIBUSY) {}
+            GPOS = (1 << Latch);// Latch HIGH
+
             currentRow++;
             if (currentRow>7){
               currentRow = 0;
@@ -104,7 +111,7 @@ SOFTWARE.
       return result;
     }
     void LEDMatrix::scroll(){
-      if (scrollText==""){// setup scrolling
+      if (scrollText==""){                          // setup scrolling
         scrollShift=0;
         scrollText = text;
         scrollText +=" ";
@@ -116,7 +123,7 @@ SOFTWARE.
       }
       for(int a=0;a<8;a++){
         currentMatrix[a] = (currentMatrix[a] >> 8); // scroll left
-        if(scrollShift==8){// add extra line
+        if(scrollShift==8){                         // add extra line
           nextMatrix[a]=0;
         }
         if(scrollShift>8){
@@ -131,8 +138,8 @@ SOFTWARE.
             break;
           }
         }
-        unsigned long long newrow = (nextMatrix[a] >> (scrollShift * 8)) & 0xFF;//unsigned long long newrow = (currentMatrix[a] >> currentRow * 8) & 0xFF;
-        currentMatrix[a] = (currentMatrix[a]  | (newrow << 56));//0xFFULL
+        unsigned long long newrow = (nextMatrix[a] >> (scrollShift * 8)) & 0xFF;
+        currentMatrix[a] = (currentMatrix[a]  | (newrow << 56));
       }
       scrollShift++;
     }

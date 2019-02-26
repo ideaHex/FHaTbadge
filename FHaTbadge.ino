@@ -59,13 +59,12 @@ void setup(){
     pinMode(SW1_Pin,INPUT_PULLUP);
     pinMode(SW2_Pin,INPUT_PULLUP);
     pinMode(SW3_Pin,INPUT_PULLUP);
-
-    matrix.clearMatrix();
+    setupMatrix();
+    matrix.setMatrix(uint64_t(0x181818422499423c),0); // show wifi symbol
     Serial.begin(115200);
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
     Serial.println(F("\r\nSetup Complete"));
-    setupMatrix();
     //testTicker.attach_ms(800,test);//TODO: Delete this, its for testing only
     //test();
     scrollTest("HackerSpace Adelaide",70);
@@ -126,7 +125,7 @@ void setupWiFi(){
 
 // server callbacks
 void handleRoot(){
-  disableTimer();
+  //disableTimer();
   if (server.hasArg("NAME") && server.arg("NAME") != "" && server.arg("PASSWORD") != "")
   {
     sendFile("/restarting.html", &server);
@@ -138,13 +137,13 @@ void handleRoot(){
   {
     sendFile(server.uri(), &server);
   }
-  enableTimer();
+  //enableTimer();
 }
 
 void handleNotFound(){
-  disableTimer();
+  //disableTimer();
 	sendFile(server.uri(),&server);
-  enableTimer();
+  //enableTimer();
 }
 // timer functions
 void setupMatrix(){
