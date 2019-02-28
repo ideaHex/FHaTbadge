@@ -36,6 +36,10 @@ SOFTWARE.
 #define bitClearU(value, bit) ((value) &= ~(1ULL << (bit)))
 #define bitWriteU(value, bit, bitvalue) (bitvalue ? bitSetU(value, bit) : bitClearU(value, bit))
 
+#define animationMode 0
+#define textScrollMode 1
+#define staticMode 3
+
 class LEDMatrix{
     public:
         LEDMatrix();
@@ -45,18 +49,17 @@ class LEDMatrix{
         void setMatrix(uint64_t* IMAGE, int angle);
         uint64_t rotateCW(uint64_t IMAGE);
         void scroll();
-        /* proposed functions
-        addBrightnessLevels
-        scroll(String text,unsigned long frameDelay) ? - ticker
-        animate(uint64_t IMAGES,int IMAGES_LEN,unsigned long frameDelay) - ticker
-
-        */
+        void createAnimation(uint64_t IMAGE,int frameNumber, unsigned long currentDelay);
+        void update();
+        void setMode(int newMode);
 
         uint32_t ticks;
         String text;
+        
 
     private:
         ICACHE_RAM_ATTR void fastDigitalWrite(int pin,bool State);
+        void animate(void);
 
         volatile uint8_t currentRow = 0;
         const uint8_t Latch = D8;
@@ -68,6 +71,11 @@ class LEDMatrix{
         uint64_t nextMatrix[8];
         int scrollShift=0;
         String scrollText;
+        uint64_t currentAnimationImages[100];
+        uint8_t currentAnimationImagesNumberOfFrames = 0;
+        int currentAnimationDelay=75;
+        uint8_t currentFrame=0;
+        int mode = textScrollMode;
 };
 
     static uint64_t matrixFont[] = {
@@ -147,7 +155,7 @@ class LEDMatrix{
   0x3c18181800180000,
   0x1c36363030003000,
   0x66361e3666060600,
-  0x1818181818181800,
+  0x3c18181818181c00,
   0xd6d6feeec6000000,
   0x6666667e3e000000,
   0x3c6666663c000000,

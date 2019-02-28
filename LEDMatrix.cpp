@@ -30,13 +30,12 @@ SOFTWARE.
         fastDigitalWrite(Latch,HIGH);
 
         SPI.begin();
-        SPI.beginTransaction(SPISettings(39000000,MSBFIRST,SPI_MODE0));// get bit errors above 39MHZ
+        SPI.beginTransaction(SPISettings(20000000,MSBFIRST,SPI_MODE0));// get bit errors above 39MHZ
 
         for(int a=0;a<8;a++){
             rowMask[a]=65280 ^ (1<<a+8);
             currentMatrix[a] = 0;
         }
-
         clearMatrix();
     }
     void LEDMatrix::clearMatrix(){
@@ -80,6 +79,9 @@ SOFTWARE.
     }
     void LEDMatrix::setMatrix(uint64_t IMAGE, int angle){ // add image without brightness
       if (angle != 0){
+        for (int a=0;a<8;a++){
+            currentMatrix[a] = IMAGE;
+        }
         //TODO: modify pixels and modify brightness for pixels partly in next place
       }else{
         IMAGE = rotateCW(IMAGE);
@@ -135,11 +137,45 @@ SOFTWARE.
               nextMatrix[b] = nextLetter;
             }
           }else{
-            break;
+            setMatrix(uint64_t(0),0);
+            break; // at end of string
           }
         }
         unsigned long long newrow = (nextMatrix[a] >> (scrollShift * 8)) & 0xFF;
         currentMatrix[a] = (currentMatrix[a]  | (newrow << 56));
       }
       scrollShift++;
+    }
+    void LEDMatrix::createAnimation(uint64_t IMAGE,int frameNumber, unsigned long currentDelay){
+      currentAnimationImagesNumberOfFrames = frameNumber;
+      currentAnimationImages[currentAnimationImagesNumberOfFrames] = IMAGE;
+      currentAnimationDelay = currentDelay;
+      currentFrame = 0;
+    }
+    void LEDMatrix::animate(){
+      for (int a=0;a<8;a++){
+          currentMatrix[a] = currentAnimationImages[currentFrame];
+        }
+      currentFrame++;
+      if (currentFrame > currentAnimationImagesNumberOfFrames) currentFrame = 0; //LOOP
+    }
+    void LEDMatrix::update(){
+      switch(mode){
+        case animationMode:
+          animate();
+          break;
+        case textScrollMode:
+          scroll();
+          break;
+
+        case staticMode:
+
+          break;
+
+        default:
+          break;
+      }
+    }
+    void LEDMatrix::setMode(int newMode){
+      mode = newMode;
     }

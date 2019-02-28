@@ -54,20 +54,20 @@ LEDMatrix matrix;
 Ticker testTicker;
 int testVeriable=0;
 Ticker animationTimer;
-
+ADC_MODE(ADC_VCC); // to be able to read VCC
 void setup(){
     pinMode(SW1_Pin,INPUT_PULLUP);
     pinMode(SW2_Pin,INPUT_PULLUP);
     pinMode(SW3_Pin,INPUT_PULLUP);
     setupMatrix();
-    matrix.setMatrix(uint64_t(0x181818422499423c),0); // show wifi symbol
+    matrix.setMatrix(uint64_t(0x181818422499423c),0); // 0x181818422499423c show wifi symbol ffffffffffffffff
     Serial.begin(115200);
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
     Serial.println(F("\r\nSetup Complete"));
     //testTicker.attach_ms(800,test);//TODO: Delete this, its for testing only
     //test();
-    scrollTest("HackerSpace Adelaide",70);
+    scrollTest(F("Flinders & Hackerspace at Tonsley"),85);//
     rst_info *resetInfo;
     resetInfo = ESP.getResetInfoPtr();
     Serial.print((*resetInfo).reason);
@@ -81,7 +81,7 @@ void setup(){
  //REASON_EXT_SYS_RST      = 6 /* external system reset */
     Serial.println(": Reset Reason: " + ESP.getResetReason());
     Serial.println(ESP.getResetInfo());
-    Serial.println("VCC: " + ESP.getVcc());
+    Serial.println("VCC: " + String(ESP.getVcc()) + " V");
  
 }
 
@@ -100,10 +100,11 @@ void test(){
 void scrollTest(String text,unsigned long frameDelay){
   matrix.text = text;
   animationTimer.detach();
+  matrix.setMode(textScrollMode);
   animationTimer.attach_ms(frameDelay,animationCallback);
 }
 void animationCallback(){
-  matrix.scroll();
+  matrix.update();
 }
 void setupWiFi(){
     WiFi.mode(WIFI_STA);
@@ -119,13 +120,44 @@ void setupWiFi(){
 
   // setup server callbacks                 
 	server.on("/", handleRoot);
+  server.on("/pattern", handlePattern);
 	server.onNotFound(handleNotFound);
 	server.begin();
 }
-
+void handlePattern(){
+  Serial.println("GOT IT");
+  Serial.println(server.arg("pattern"));
+  server.send(204,"HTTP/1.1","NO CONTENT");
+  String pattern = server.arg("pattern");
+  uint8_t frameNumber=0;
+  String anDelay = server.arg("delay");
+  unsigned long animationDelay = strtoul(anDelay.substring(0,8).c_str(),NULL,10);
+  while (pattern.length()>10){
+    uint64_t number = matrix.rotateCW(strtoull(pattern.substring(0,16).c_str(), NULL, 16));
+    matrix.createAnimation(number,frameNumber,animationDelay);
+    frameNumber++;
+    pattern.remove(0,17);
+  }
+    /*
+    uint64_t pipe = number;//number;//lets assume  the data is 12345ABCD9 hexadecimal
+  char buf[50];
+if(pipe > 0xFFFFFFFFLL) {
+  sprintf(buf, "%lX%08lX", (unsigned long)(pipe>>32), (unsigned long)(pipe&0xFFFFFFFFULL));
+} else {
+  sprintf(buf, "%lX", (unsigned long)pipe);
+}
+Serial.println( buf );
+pattern.remove(0,17);
+}
+  Serial.println("Delay"+String(animationDelay));
+  */
+    Serial.println("Delay: "+String(animationDelay));
+    animationTimer.detach();
+    matrix.setMode(animationMode);
+    animationTimer.attach_ms(animationDelay,animationCallback);
+}
 // server callbacks
 void handleRoot(){
-  //disableTimer();
   if (server.hasArg("NAME") && server.arg("NAME") != "" && server.arg("PASSWORD") != "")
   {
     sendFile("/restarting.html", &server);
@@ -141,9 +173,7 @@ void handleRoot(){
 }
 
 void handleNotFound(){
-  //disableTimer();
 	sendFile(server.uri(),&server);
-  //enableTimer();
 }
 // timer functions
 void setupMatrix(){
