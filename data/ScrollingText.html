@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>FHaTbadge</title>
+    <title>Scrolling Text</title>
     <!--
 MIT License
 
@@ -26,9 +26,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, height=device-height, user-scalable=yes">
-	<link href="favicon.ico" rel="shortcut icon">
+    <meta name="viewport" content="width=device-width, height=device-height">   
     <style>
+
     body{margin: auto;
 		background-color: #333;
 		background-image: url("img/HSAFL.png");
@@ -38,24 +38,25 @@ SOFTWARE.
 		font-size: 20px;
 		text-shadow: 2px 2px Black;
     }
-
-    #headline{
-        background-color: rgba(50, 50, 50, 0.85);
-        text-shadow: 2px 2px black;
-    }
-
-  t2{
-	  font-size:22pt;
-  }
     </style>
   </head>
   <body>
-  <br><br><br><br><br><br>
-  <table style="width:100%;"><tr>
-    <th style="width:33%"></th><th><a href="LedMatrix.html"><button style="width:100%;height:50px;" title="Open LED Matrix editor">LED Matrix Editor</button></a></th><th style="width:33%"></th></tr>
-    <tr><th style="width:33%"></th><th><a href="WifiSettings.html"><button style="width:100%;height:50px;" title="Open network options page">Wifi Settings</button></a></th><th style="width:33%"></th>
-    </tr>
-    <tr><th style="width:33%"></th><th><a href="ScrollingText.html"><button style="width:100%;height:50px;" title="Open scrolling text editor">Scrolling Text</button></a></th><th style="width:33%"></th>
+  <table style="position:absolute;width:100%;top: 31%;"><tr><th style="width:31%"></th>
+    <th style="width:33%"><span><br>
+  Scrolling Text:<br><br><input type='text' name='scrollText' placeholder='FHaTbadge' id="MyText"><br>
+  <br><br>
+  <button onclick="myButton()">Submit<br></span></th>
+    <th style="width:33%"></th>
     </tr>
     </table>
-  </body></html>
+    <script>
+	function myButton() {
+        var params = 'scrollText=' + document.getElementById("MyText").value;
+        var xhttp = new XMLHttpRequest();
+        	xhttp.open("POST", "/text" , true);
+            xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        	xhttp.send(params);
+    };
+	</script>
+</body>
+</html>

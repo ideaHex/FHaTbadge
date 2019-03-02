@@ -6,6 +6,11 @@ $(function () {
     var $deleteButton = $('#delete-button');
     var $updateButton = $('#update-button');
     var $runAnimationButton = $('#runAnimation-button');
+    var $SaveFHatBadge = $('#SaveFHatbadge-menuItem');
+    var $SavePC = $('#SavePC-menuItem');
+
+    var $LoadPC = $('#LoadPC-menuItem');
+
 
     var $leds, $cols, $rows;
 
@@ -282,6 +287,51 @@ $(function () {
         	xhttp.open("POST", "/pattern" , true);
             xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         	xhttp.send(params);
+    });
+    $SaveFHatBadge.click(function (){
+        var fileName = prompt("Please enter the file name:", "matrix.FHaT");
+        var params = 'save=' + savedHashState+ '&delay=' + $('#play-delay-input').val() + '&fileName=' + fileName;
+        var xhttp = new XMLHttpRequest();
+        	xhttp.open("POST", "/pattern" , true);
+            xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        	xhttp.send(params);
+    });
+    $SavePC.click(function(){
+        var filename ="matrix.FHaT";
+        var data = savedHashState + '|' + $('#play-delay-input').val();
+        var file = new Blob([data], {type: "text/plain"});
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, filename);
+    else { // Others
+        var a = document.createElement("a"),
+                url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);  
+        }, 0); 
+    }
+    });
+    $LoadPC.click(function(){
+        // Create an input element
+    var inputElement = document.createElement("input");
+    inputElement.type = "file";
+    inputElement.accept = "*.FHaT";
+    // set onchange event to call callback when user has selected file
+    inputElement.addEventListener("change", function(event){
+            var reader = new FileReader();
+            reader.onload = (function(fileLoadedEvent){
+                savedHashState = "#"+fileLoadedEvent.target.result;
+                $('#play-delay-input').val(savedHashState.substring(savedHashState.lastIndexOf("|")+1,savedHashState.length));
+                window.location.hash = savedHashState.substring(0,savedHashState.lastIndexOf("|"));
+            });
+            reader.readAsText(this.files[0], "UTF-8");
+    });
+    // dispatch a click event to open the file dialog
+    inputElement.dispatchEvent(new MouseEvent("click")); 
     });
 
     $cols.find('.item').mousedown(function () {

@@ -28,8 +28,6 @@ SOFTWARE.
 
 #include <ESP8266WiFi.h>
 #include <SPI.h>
-//#include <Ticker.h>
-//#include <functional>
 
 #define bitReadU(value, bit) (((value) >> (bit)) & 0x01)
 #define bitSetU(value, bit) ((value) |= (1ULL << (bit)))
@@ -52,6 +50,7 @@ class LEDMatrix{
         void createAnimation(uint64_t IMAGE,int frameNumber, unsigned long currentDelay);
         void update();
         void setMode(int newMode);
+        void newScrollText(String newText);
 
         uint32_t ticks;
         String text;

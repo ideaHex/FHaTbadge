@@ -51,28 +51,30 @@ ESP8266WebServer server(80);
 DNSServer dnsServer;
 HandleTheOTA otaHandler(&dnsServer,AP_Name,password);
 LEDMatrix matrix;
-Ticker testTicker;
-int testVeriable=0;
 Ticker animationTimer;
-ADC_MODE(ADC_VCC); // to be able to read VCC
+ADC_MODE(ADC_VCC);  // to be able to read VCC
+
+#define DIAG        // comment out to turn of diagnostics
+
 void setup(){
     pinMode(SW1_Pin,INPUT_PULLUP);
     pinMode(SW2_Pin,INPUT_PULLUP);
     pinMode(SW3_Pin,INPUT_PULLUP);
     setupMatrix();
-    matrix.setMatrix(uint64_t(0x181818422499423c),0); // 0x181818422499423c show wifi symbol ffffffffffffffff
+    matrix.setMatrix(uint64_t(0x181818422499423c),0); // show wifi symbol
     Serial.begin(115200);
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
+    
+    scrollTest(F("Flinders & Hackerspace at Tonsley"),85);// test scroll function
+    
+    #ifdef DIAG
     Serial.println(F("\r\nSetup Complete"));
-    //testTicker.attach_ms(800,test);//TODO: Delete this, its for testing only
-    //test();
-    scrollTest(F("Flinders & Hackerspace at Tonsley"),85);//
     rst_info *resetInfo;
     resetInfo = ESP.getResetInfoPtr();
     Serial.print((*resetInfo).reason);
 
- //REASON_DEFAULT_RST = 0, /* normal startup by power on */
+//REASON_DEFAULT_RST = 0, /* normal startup by power on */
  //REASON_WDT_RST = 1, /* hardware watch dog reset */
  //REASON_EXCEPTION_RST = 2, /* exception reset, GPIO status won't change */
  //REASON_SOFT_WDT_RST   = 3, /* software watch dog reset, GPIO status won't change */
@@ -82,8 +84,8 @@ void setup(){
     Serial.println(": Reset Reason: " + ESP.getResetReason());
     Serial.println(ESP.getResetInfo());
     Serial.println("VCC: " + String(ESP.getVcc()) + " V");
- 
-}
+    #endif
+    }
 
 void loop(){
     delay(1);                         // power saving in station mode drops power usage.
@@ -92,11 +94,7 @@ void loop(){
     dnsServer.processNextRequest();   // maintain DNS server.
     server.handleClient();            // handle client requests.
 }
-void test(){
-  matrix.setMatrix(matrixFont[testVeriable],0);
-  testVeriable++;
-  if (testVeriable>fontLength-1)testVeriable=0;
-}
+
 void scrollTest(String text,unsigned long frameDelay){
   matrix.text = text;
   animationTimer.detach();
@@ -121,12 +119,20 @@ void setupWiFi(){
   // setup server callbacks                 
 	server.on("/", handleRoot);
   server.on("/pattern", handlePattern);
+  server.on("/text", handleScrollingText);
 	server.onNotFound(handleNotFound);
 	server.begin();
 }
+// server callbacks
+void handleScrollingText(){
+  matrix.newScrollText(server.arg("scrollText"));
+  //Serial.println("The Text IS: " + server.arg("scrollText"));
+  animationTimer.detach();
+  server.send(204,"HTTP/1.1","NO CONTENT");
+  matrix.setMode(textScrollMode);
+  animationTimer.attach_ms(75,animationCallback);
+  }
 void handlePattern(){
-  Serial.println("GOT IT");
-  Serial.println(server.arg("pattern"));
   server.send(204,"HTTP/1.1","NO CONTENT");
   String pattern = server.arg("pattern");
   uint8_t frameNumber=0;
@@ -138,25 +144,11 @@ void handlePattern(){
     frameNumber++;
     pattern.remove(0,17);
   }
-    /*
-    uint64_t pipe = number;//number;//lets assume  the data is 12345ABCD9 hexadecimal
-  char buf[50];
-if(pipe > 0xFFFFFFFFLL) {
-  sprintf(buf, "%lX%08lX", (unsigned long)(pipe>>32), (unsigned long)(pipe&0xFFFFFFFFULL));
-} else {
-  sprintf(buf, "%lX", (unsigned long)pipe);
-}
-Serial.println( buf );
-pattern.remove(0,17);
-}
-  Serial.println("Delay"+String(animationDelay));
-  */
-    Serial.println("Delay: "+String(animationDelay));
-    animationTimer.detach();
-    matrix.setMode(animationMode);
-    animationTimer.attach_ms(animationDelay,animationCallback);
-}
-// server callbacks
+  //Serial.println("Delay: "+String(animationDelay));
+  animationTimer.detach();
+  matrix.setMode(animationMode);
+  animationTimer.attach_ms(animationDelay,animationCallback);
+  }
 void handleRoot(){
   if (server.hasArg("NAME") && server.arg("NAME") != "" && server.arg("PASSWORD") != "")
   {
@@ -169,7 +161,6 @@ void handleRoot(){
   {
     sendFile(server.uri(), &server);
   }
-  //enableTimer();
 }
 
 void handleNotFound(){

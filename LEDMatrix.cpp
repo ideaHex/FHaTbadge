@@ -46,7 +46,6 @@ SOFTWARE.
             // switch back to 16 bit mode
             const uint32_t mask = ~((SPIMMOSI << SPILMOSI) | (SPIMMISO << SPILMISO));
             SPI1U1 = ((SPI1U1 & mask) | ((15 << SPILMOSI) | (15 << SPILMISO)));
-            // Wifi symbol 0x181818422499423c
     }
     ICACHE_RAM_ATTR void LEDMatrix::fastDigitalWrite(int pin,bool State){
 	    if (State){
@@ -112,6 +111,10 @@ SOFTWARE.
       }
       return result;
     }
+    void LEDMatrix::newScrollText(String newText){
+      scrollText = "";
+      text = newText;
+    }
     void LEDMatrix::scroll(){
       if (scrollText==""){                          // setup scrolling
         scrollShift=0;
@@ -136,13 +139,12 @@ SOFTWARE.
             for (int b=0;b<8;b++){
               nextMatrix[b] = nextLetter;
             }
-          }else{
-            setMatrix(uint64_t(0),0);
-            break; // at end of string
           }
         }
-        unsigned long long newrow = (nextMatrix[a] >> (scrollShift * 8)) & 0xFF;
-        currentMatrix[a] = (currentMatrix[a]  | (newrow << 56));
+        if (scrollText !=""){
+          unsigned long long newrow = (nextMatrix[a] >> (scrollShift * 8)) & 0xFF;
+          currentMatrix[a] = (currentMatrix[a]  | (newrow << 56));
+        }
       }
       scrollShift++;
     }

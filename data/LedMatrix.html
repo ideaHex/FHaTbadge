@@ -71,31 +71,33 @@ SOFTWARE.
 <body class="red-leds plain-theme">
 
 <nav class="navbar navbar-inverse navbar-static-top">
+<div class="navbar-inner">
     <div class="container-fluid">
         <div class="navbar-header">
             <a class="navbar-brand">LED Matrix Editor</a>
         </div>
-		<ul class="nav navbar-nav">
-            <li><a href="index.html">home</a></li>
-            <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">File <span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                 <li class="dropdown-submenu">
-                <a class="test" tabindex="-1" href="#">Save<span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  <li><a tabindex="-1" href="#">FHatbadge</a></li>
-                  <li><a tabindex="-1" href="#">PC</a></li>
-                </ul>
-              </li>
-              <li class="dropdown-submenu">
-                <a class="test" tabindex="-1" href="#">Load<span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  <li><a tabindex="-1" href="#">FHatbadge</a></li>
-                  <li><a tabindex="-1" href="#">PC</a></li>
-                </ul>
-              </li>
-                </ul>
-              </li>
-        </ul>
+                <ul class="nav navbar-nav">
+                        <li><a href="index.html">home</a></li>
+                        <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">File <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                             <li class="dropdown-submenu">
+                            <a class="test" tabindex="-1" href="#">Save<span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                              <li><a id="SaveFHatbadge-menuItem" tabindex="-1" href="javascript:void(0)">FHatbadge</a></li>
+                              <li><a id="SavePC-menuItem" tabindex="-1" href="javascript:void(0)">PC</a></li>
+                            </ul>
+                          </li>
+                          <li class="dropdown-submenu">
+                            <a class="test" tabindex="-1" href="#">Load<span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                              <li><a id="LoadFHatbadge-menuItem" tabindex="-1" href="javascript:void(0)">FHatbadge</a></li>
+                              <li><a id="LoadPC-menuItem" tabindex="-1" href="javascript:void(0)">PC</a></li>
+                            </ul>
+                          </li>
+                            </ul>
+                          </li>
+                    </ul>
+            <ul class="nav pull-right"></ul>
 
         <p class="navbar-text pull-right small">
             <span class="glyphicon glyphicon-hand-up"></span>
@@ -113,6 +115,7 @@ SOFTWARE.
         <p class="navbar-text pull-right small">
             Select LEDs color <span class="glyphicon glyphicon-hand-right"></span>
         </p>
+    </div>
     </div>
 </nav>
 
@@ -280,13 +283,17 @@ SOFTWARE.
     </ul>
 </div>
 <script>
-    $(document).ready(function(){
-      $('.dropdown-submenu a.test').on("click", function(e){
-        $(this).next('ul').toggle();
-        e.stopPropagation();
-        e.preventDefault();
-      });
-    });
-    </script>
+        $(document).ready(function(){
+          $('.dropdown-submenu a').on("click", function(e){
+            if ($(this).hasClass('test')) {
+              $(this).next('ul').toggle();
+              e.stopPropagation();
+              e.preventDefault();
+            } else {
+              $('.dropdown-submenu ul').hide();
+            }
+          });
+        });
+</script>
 
 </body></html>
