@@ -8,7 +8,7 @@ $(function () {
     var $runAnimationButton = $('#runAnimation-button');
     var $SaveFHatBadge = $('#SaveFHatbadge-menuItem');
     var $SavePC = $('#SavePC-menuItem');
-
+    var $LoadFHaTbadge = $('#LoadFHatbadge-menuItem');
     var $LoadPC = $('#LoadPC-menuItem');
 
 
@@ -290,9 +290,9 @@ $(function () {
     });
     $SaveFHatBadge.click(function (){
         var fileName = prompt("Please enter the file name:", "matrix.FHaT");
-        var params = 'save=' + savedHashState+ '&delay=' + $('#play-delay-input').val() + '&fileName=' + fileName;
+        var params = 'saveData=' + savedHashState+ '&delay=' + $('#play-delay-input').val() + '&fileName=' + fileName;
         var xhttp = new XMLHttpRequest();
-        	xhttp.open("POST", "/pattern" , true);
+        	xhttp.open("POST", "/save" , true);
             xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         	xhttp.send(params);
     });
@@ -314,6 +314,32 @@ $(function () {
             window.URL.revokeObjectURL(url);  
         }, 0); 
     }
+    });
+    $LoadFHaTbadge.click(function(){
+        var fileList;
+        var xhtp = new XMLHttpRequest();
+        var params = '/directory=' + "DummyData";
+        xhtp.open("Get", "/directory" , true);
+        xhtp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhtp.send(params);
+        xhtp.onload = function(e){
+            fileList = xhtp.responseText;
+            var fileName = prompt(fileList+"\r\n\r\nPlease enter the file name:", "matrix.FHaT");
+            if (!fileName.endsWith(".FHaT")){ 
+                fileName += ".FHaT";
+            };
+            var params = 'filename=' + fileName;
+            var xhttp = new XMLHttpRequest();
+        	    xhttp.open("Get", fileName , true);
+                xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                xhttp.send(params);
+                xhttp.onload = function(e){
+                    var theData = xhttp.responseText;
+                    savedHashState = "#"+theData;
+                    $('#play-delay-input').val(savedHashState.substring(savedHashState.lastIndexOf("|")+1,savedHashState.length-2));
+                    window.location.hash = savedHashState.substring(0,savedHashState.lastIndexOf("|"));
+                };
+        };
     });
     $LoadPC.click(function(){
         // Create an input element
