@@ -66,5 +66,4 @@ SOFTWARE.
 	        }
             delay(50);
         }
-        //Serial.println("Time taken to connect:"+String( (unsigned long) (millis()-(stationModeTimeout-10000)) ) );
     }
