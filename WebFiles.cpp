@@ -25,6 +25,9 @@ SOFTWARE.
 #include <FS.h>
 
 void sendFile(String path, ESP8266WebServer * server){
+  while(path.indexOf("%20") != -1){ // fix spaces in path
+    path.replace("%20"," ");
+  }
   if(path.endsWith("/")) path += "index.html";
   String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
