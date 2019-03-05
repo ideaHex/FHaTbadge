@@ -142,15 +142,15 @@ void handleSave(){
   //TODO: see if file already exists ie. SPIFFS.exists(path) , ask for overwrite etc ...
   
   //TODO: Make sure theres enough free space
-  FSInfo fs_info;
-  SPIFFS.info(fs_info);
-  Serial.println("Free SPIFFS memory: " + String((fs_info.totalBytes - fs_info.usedBytes)/1000000.0) +" MB");
+  //FSInfo fs_info;
+  //SPIFFS.info(fs_info);
+  //Serial.println("Free SPIFFS memory: " + String((fs_info.totalBytes - fs_info.usedBytes)/1000000.0) +" MB");
   
 	File dataFile = SPIFFS.open(fileName, "w");
 	if (!dataFile){
 		    //TODO: Error handeling
 	}
-	dataFile.println(pattern + "|" + anDelay);
+	dataFile.print(pattern + "|" + anDelay);
 	dataFile.close();
 }
 void handleLoad(){
@@ -158,12 +158,12 @@ void handleLoad(){
   fileName += "Directory";
   File dataFile = SPIFFS.open(fileName, "w");
   Dir dir = SPIFFS.openDir("/");
+  FSInfo fs_info;
+  SPIFFS.info(fs_info);
+  dataFile.println("Free FHaTbadge storage: " + String((fs_info.totalBytes - fs_info.usedBytes)/1000000.0) +" MB\r\n");
   while (dir.next()) {
     if (dir.fileName().endsWith(".FHaT")){
       dataFile.println(dir.fileName().substring(1,dir.fileName().length()));
-      Serial.print(dir.fileName());
-      File f = dir.openFile("r");
-      Serial.println(" Size: " + f.size());
     }
   }
   dataFile.close();

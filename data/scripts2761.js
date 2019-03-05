@@ -289,12 +289,23 @@ $(function () {
         	xhttp.send(params);
     });
     $SaveFHatBadge.click(function (){
-        var fileName = prompt("Please enter the file name:", "matrix.FHaT");
-        var params = 'saveData=' + savedHashState+ '&delay=' + $('#play-delay-input').val() + '&fileName=' + fileName;
-        var xhttp = new XMLHttpRequest();
-        	xhttp.open("POST", "/save" , true);
-            xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        	xhttp.send(params);
+        var fileList;
+        var xhtp = new XMLHttpRequest();
+        var params = '/directory=' + "DummyData";
+        xhtp.open("Get", "/directory" , true);
+        xhtp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhtp.send(params);
+        xhtp.onload = function(e){
+            fileList = xhtp.responseText;
+            var fileName = prompt(fileList+"\r\n\r\nPlease enter the file name:", "matrix.FHaT");
+            if (fileName !== null){
+                var params = 'saveData=' + savedHashState+ '&delay=' + $('#play-delay-input').val() + '&fileName=' + fileName;
+                var xhttp = new XMLHttpRequest();
+        	    xhttp.open("POST", "/save" , true);
+                xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                xhttp.send(params);
+            }
+        };
     });
     $SavePC.click(function(){
         var filename ="matrix.FHaT";
@@ -325,20 +336,22 @@ $(function () {
         xhtp.onload = function(e){
             fileList = xhtp.responseText;
             var fileName = prompt(fileList+"\r\n\r\nPlease enter the file name:", "matrix.FHaT");
-            if (!fileName.endsWith(".FHaT")){ 
-                fileName += ".FHaT";
-            };
-            var params = 'filename=' + fileName;
-            var xhttp = new XMLHttpRequest();
+            if (fileName !== null){
+                if (!fileName.endsWith(".FHaT")){ 
+                    fileName += ".FHaT";
+                };
+                var params = 'filename=' + fileName;
+                var xhttp = new XMLHttpRequest();
         	    xhttp.open("Get", fileName , true);
                 xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                 xhttp.send(params);
                 xhttp.onload = function(e){
                     var theData = xhttp.responseText;
                     savedHashState = "#"+theData;
-                    $('#play-delay-input').val(savedHashState.substring(savedHashState.lastIndexOf("|")+1,savedHashState.length-2));
+                    $('#play-delay-input').val(savedHashState.substring(savedHashState.lastIndexOf("|")+1,savedHashState.length));
                     window.location.hash = savedHashState.substring(0,savedHashState.lastIndexOf("|"));
                 };
+            };
         };
     });
     $LoadPC.click(function(){
