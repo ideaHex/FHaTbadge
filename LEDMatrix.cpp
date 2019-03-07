@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "LEDMatrix.h"
 
-    LEDMatrix::LEDMatrix(){// constructor
+LEDMatrix::LEDMatrix(){// constructor
 
         pinMode(Latch, OUTPUT);
         fastDigitalWrite(Latch,HIGH);
@@ -37,8 +37,8 @@ SOFTWARE.
             currentMatrix[a] = 0;
         }
         clearMatrix();
-    }
-    void LEDMatrix::clearMatrix(){
+}
+void LEDMatrix::clearMatrix(){
             fastDigitalWrite(Latch, LOW);
             SPI.write(B00000000);
             SPI.write(B11111111);
@@ -46,15 +46,15 @@ SOFTWARE.
             // switch back to 16 bit mode
             const uint32_t mask = ~((SPIMMOSI << SPILMOSI) | (SPIMMISO << SPILMISO));
             SPI1U1 = ((SPI1U1 & mask) | ((15 << SPILMOSI) | (15 << SPILMISO)));
-    }
-    ICACHE_RAM_ATTR void LEDMatrix::fastDigitalWrite(int pin,bool State){
+}
+ICACHE_RAM_ATTR void LEDMatrix::fastDigitalWrite(int pin,bool State){
 	    if (State){
 		    GPOS = (1 << pin); // HIGH
 		    return;
 	    }
 	    GPOC = (1 << pin); // LOW
-    }
-    ICACHE_RAM_ATTR void LEDMatrix::T1IntHandler(){
+}
+ICACHE_RAM_ATTR void LEDMatrix::T1IntHandler(){
             
             uint16_t row = (currentMatrix[currentBrightness] >> (currentRow * 8)) & 0xFF;
 
@@ -75,8 +75,8 @@ SOFTWARE.
               currentBrightness++;
               if (currentBrightness>7)currentBrightness=0;
             }
-    }
-    void LEDMatrix::setMatrix(uint64_t IMAGE, int angle){ // add image without brightness
+}
+void LEDMatrix::setMatrix(uint64_t IMAGE, int angle){ // add image without brightness
       if (angle != 0){
         for (int a=0;a<8;a++){
             currentMatrix[a] = IMAGE;
@@ -88,8 +88,8 @@ SOFTWARE.
             currentMatrix[a] = IMAGE;
         }
       }
-    }
-    void LEDMatrix::setMatrix(uint64_t* IMAGE, int angle){
+}
+void LEDMatrix::setMatrix(uint64_t* IMAGE, int angle){
       if (angle != 0){
           
       }else{
@@ -97,7 +97,7 @@ SOFTWARE.
             currentMatrix[a] = IMAGE[a];
         }
       }
-    }
+}
     uint64_t LEDMatrix::rotateCW(uint64_t IMAGE){
       uint64_t result = 0;
       int r=1,c=1;
@@ -110,12 +110,12 @@ SOFTWARE.
         }
       }
       return result;
-    }
-    void LEDMatrix::newScrollText(String newText){
+}
+void LEDMatrix::newScrollText(String newText){
       scrollText = "";
       text = newText;
-    }
-    void LEDMatrix::scroll(){
+}
+void LEDMatrix::scroll(){
       if (scrollText==""){                          // setup scrolling
         scrollShift=0;
         scrollText = text;
@@ -147,21 +147,64 @@ SOFTWARE.
         }
       }
       scrollShift++;
-    }
-    void LEDMatrix::createAnimation(uint64_t IMAGE,int frameNumber, unsigned long currentDelay){
+}
+void LEDMatrix::createAnimation(uint64_t IMAGE,int frameNumber, unsigned long currentDelay){
       currentAnimationImagesNumberOfFrames = frameNumber;
       currentAnimationImages[currentAnimationImagesNumberOfFrames] = IMAGE;
       currentAnimationDelay = currentDelay;
       currentFrame = 0;
-    }
-    void LEDMatrix::animate(){
+}
+void LEDMatrix::animate(){
       for (int a=0;a<8;a++){
           currentMatrix[a] = currentAnimationImages[currentFrame];
         }
       currentFrame++;
       if (currentFrame > currentAnimationImagesNumberOfFrames) currentFrame = 0; //LOOP
+}
+void LEDMatrix::displayMatrix(int time, int dtime) {// matrix waterfall display
+
+    bool shift = 0;
+    scrollShift++;
+    if (scrollShift > 2){
+       shift = 1;
+       scrollShift =0;
     }
-    void LEDMatrix::update(){
+		for (int r = NUM_ROW - 2; r >= 0; r--)
+			for (int c = 0; c < NUM_COL; c++) {
+				if (display[r][c] == 0)
+					display[r + shift][c] = 0;
+				else{
+					display[r + shift][c] = display[r][c] - random(0,((display[r][c]*0.4)+1.6));//- random(2) * 2;
+          if (display[r + shift][c] > 7)display[r + shift][c] = 7;
+          else if (display[r + shift][c] == 0)display[r + shift][c] = 7;
+        }
+			}
+
+    if (shift){
+		uint8_t rnd = byte(random(256));
+		for (int c = 0; c < 8; c++)
+			display[0][c] = rnd & 1 << c ? 7 : 0;
+    }
+  convertIMAGEFromLastFHaTBadge();
+}
+void LEDMatrix::convertIMAGEFromLastFHaTBadge(){
+      uint64_t row=0;
+      uint64_t currentMatrixImage=0;
+      for (uint8_t matrixLevel = 0;matrixLevel < 8;matrixLevel++){
+        currentMatrixImage = 0;
+        for (int c=0;c<8;c++){
+          row=0;
+          for (int a=0;a<8;a++){
+            if (display[a][c] > matrixLevel){ // brighter than current level
+              row = row | (1 << (7-a));
+            }
+          }
+          currentMatrixImage = (currentMatrixImage | (row << (c * 8)));
+        }
+          currentMatrix[matrixLevel] = currentMatrixImage;
+      }
+}
+void LEDMatrix::update(){
       switch(mode){
         case animationMode:
           animate();
@@ -174,10 +217,14 @@ SOFTWARE.
 
           break;
 
+        case matrixWaterfall:
+          displayMatrix(10,125);
+          break;
+
         default:
           break;
       }
-    }
-    void LEDMatrix::setMode(int newMode){
+}
+void LEDMatrix::setMode(int newMode){
       mode = newMode;
-    }
+}

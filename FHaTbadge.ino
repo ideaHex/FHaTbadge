@@ -101,6 +101,7 @@ void scrollTest(String text,unsigned long frameDelay){
   matrix.setMode(textScrollMode);
   animationTimer.attach_ms(frameDelay,animationCallback);
 }
+
 void animationCallback(){
   matrix.update();
 }
@@ -122,10 +123,17 @@ void setupWiFi(){
   server.on("/save", handleSave);
   server.on("/text", handleScrollingText);
   server.on("/directory", handleLoad);
+  server.on("/waterfall", handelMatrixWaterfall);
 	server.onNotFound(handleNotFound);
 	server.begin();
 }
 // server callbacks
+void handelMatrixWaterfall(){
+  server.send(204,"HTTP/1.1","NO CONTENT");
+  animationTimer.detach();
+  matrix.setMode(matrixWaterfall);
+  animationTimer.attach_ms(48,animationCallback);
+}
 void handleScrollingText(){
   matrix.newScrollText(server.arg("scrollText"));
   animationTimer.detach();

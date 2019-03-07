@@ -212,6 +212,9 @@ SOFTWARE.
                         </div>
                         <div style="height: 25px;"></div>
                         <div id="shift-buttons-container">
+                            <button id="rotate-button" style="top: 10px; left:90px;" title="Rotate matrix">
+                                <span class="glyphicon glyphicon-retweet"></span>
+                            </button>
                             <button id="shift-up-button" style="top:10px; left:50px;" title="Shift matrix up">
                                 <span class="glyphicon glyphicon-chevron-up"></span>
                             </button>
@@ -227,6 +230,7 @@ SOFTWARE.
                             <button id="invert-button" style="top: 50px; left: 50px;" title="Invert matrix">
                                 <span class="glyphicon glyphicon-lamp"></span>
                             </button>
+                            
                         </div>
                         <div style="height: 25px;"></div>
                     </td>
@@ -282,6 +286,17 @@ SOFTWARE.
         <li>Use predefined sets of fonts and icons</li>
         <li>Play animation with configurable inter-frame delay (in milliseconds)</li>
         <li>Choose matrix color</li>
+        <li>Shift the matrix using arrow keys</li>
+        <li>Cyclically shift the matrix using arrow keys with shift key</li>
+        <li>Rotate the matrix clockwise or counterclockwise using ctrl+left/ctrl+right</li>
+        <li>Flip the matrix vertically using ctrl+up/ctrl+down</li>
+        <li>Copy and Paste the matrix using ctrl+C and ctrl+V</li>
+        <li>Paste the matrix with xor mode using ctrl+shift+V</li>
+        <li>Undo the action on LED matrix using ctrl+Z</li>
+        <li>Insert images using enter key; Update images using ctrl+enter; Delete images using delete key</li>
+        <li>Focus others images using pageup/pagedown</li>
+        <li>Reorder images using alt+pageup/alt+pagedown</li>
+        <li>Play/Stop animation using space key</li>
     </ul>
 </div>
 <script>
@@ -296,6 +311,7 @@ SOFTWARE.
             }
           });
         });
+        hljs.initHighlightingOnLoad();
 </script>
 
 </body></html>

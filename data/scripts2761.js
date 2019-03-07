@@ -32,7 +32,7 @@ $(function () {
             return out.join('');
         },
         tableLeds: function () {
-            var out = ['<table id="leds-matrix">'];
+            var out = ['<table id="leds-matrix" tabindex="1">'];
             for (var i = 1; i < 9; i++) {
                 out.push('<tr>');
                 for (var j = 1; j < 9; j++) {
@@ -215,7 +215,22 @@ $(function () {
             $deleteButton.attr('disabled', 'disabled');
             $updateButton.attr('disabled', 'disabled');
         }
+        $leds.focus();
         saveState();
+    }
+
+    function focusToFrame($focusToFrame) {
+        $frames.find('.frame.selected').removeClass('selected');
+
+        if ($focusToFrame.length) {
+            $focusToFrame.addClass('selected');
+            $deleteButton.removeAttr('disabled');
+            $updateButton.removeAttr('disabled');
+        } else {
+            $deleteButton.attr('disabled', 'disabled');
+            $updateButton.attr('disabled', 'disabled');
+        }
+        $leds.focus();
     }
 
     $('#cols-container').append($(generator.tableCols()));
@@ -226,9 +241,171 @@ $(function () {
     $rows = $('#rows-list');
     $leds = $('#leds-matrix');
 
-    $leds.find('.item').mousedown(function () {
+    var edit_mode = 0; // 0: none, 1: activate, 2: deactivate, 3: toggle
+
+    $leds.find('.item').mousedown(function (e) {
+        cachePattern();
+        if (e.shiftKey) {
+            edit_mode = 3;
+        } else if ($(this).is(".active")) {
+            edit_mode = 2;
+        } else {
+            edit_mode = 1;
+        }
         $(this).toggleClass('active');
         ledsToHex();
+    });
+
+    $("#leds-container").mouseleave(function () {
+        edit_mode = 0;
+    }).mouseup(function () {
+        edit_mode = 0;
+    });
+
+    $leds.find('.item').mouseenter(function () {
+        if (edit_mode == 1) {
+            $(this).toggleClass('active', true);
+        } else if (edit_mode == 2) {
+            $(this).toggleClass('active', false);
+        } else if (edit_mode == 3) {
+            $(this).toggleClass('active');
+        } else {
+            return;
+        }
+        ledsToHex();
+    });
+
+    var patternTool = {
+        rotate: function (pattern, direction) {
+            var byte_table = [];
+            for (var i = 7; i >= 0; i--) {
+                byte_table.push(parseInt(pattern.substr(2 * i, 2), 16));
+            }
+            var rot = [];
+            for (var i = 0; i < 8; i++) {
+                var byte = 0;
+                for (var j = 0; j < 8; j++) {
+                    if (direction) {
+                        if (byte_table[7-j] >> i & 1) {
+                            byte |= 1 << j;
+                        }
+                    } else {
+                        if (byte_table[j] >> (7-i) & 1) {
+                            byte |= 1 << j;
+                        }
+                    }
+                }
+                rot.push(('0' + byte.toString(16)).substr(-2));
+            }
+            return rot.reverse().join('');
+        },
+        flipH: function (pattern) {
+            var flip = [];
+            for (var i = 0; i < 8; i++) {
+                var byte = pattern.substr(2 * i, 2);
+                byte = parseInt(byte, 16).toString(2);
+                byte = ('00000000' + byte).substr(-8);
+                byte = byte.split('').reverse().join('');
+                byte = parseInt(byte, 2).toString(16);
+                byte = ('0' + byte).substr(-2);
+                flip.push(byte);
+            }
+            return flip.join('');
+        },
+        flipV: function (pattern) {
+            return pattern.match(/.{2}/g).reverse().join('');
+        },
+        up: function (pattern, cyclic) {
+            return (cyclic ? pattern.substr(14, 2) : '00') + pattern.substr(0, 14);
+        },
+        down: function (pattern, cyclic) {
+            return pattern.substr(2, 14) + (cyclic ? pattern.substr(0, 2) : '00');
+        },
+        right: function (pattern, cyclic) {
+            var out = [];
+            for (var i = 0; i < 8; i++) {
+                var byte = pattern.substr(i * 2, 2);
+                byte = parseInt(byte, 16);
+                if (cyclic) {
+                    byte = (byte << 1) | (byte >> 7);
+                } else {
+                    byte <<= 1;
+                }
+                byte = byte.toString(16);
+                byte = ('0' + byte).substr(-2);
+                out.push(byte);
+            }
+            return out.join('');
+        },
+        left: function (pattern, cyclic) {
+            var out = [];
+            for (var i = 0; i < 8; i++) {
+                var byte = pattern.substr(i * 2, 2);
+                byte = parseInt(byte, 16);
+                if (cyclic) {
+                    byte = (byte >> 1) | (byte << 7);
+                } else {
+                    byte >>= 1;
+                }
+                byte = byte.toString(16);
+                byte = ('0' + byte).substr(-2);
+                out.push(byte);
+            }
+            return out.join('');
+        },
+        not: function (pattern) {
+            var out = [];
+            for (var i = 0; i < 8; i++) {
+                var byte = pattern.substr(i * 2, 2);
+                byte = ~parseInt(byte, 16);
+                byte = byte.toString(16);
+                byte = ('0' + byte).substr(-2);
+                out.push(byte);
+            }
+            return out.join('');
+        },
+        or: function (pattern1, pattern2) {
+            var out = [];
+            for (var i = 0; i < 8; i++) {
+                var byte1 = pattern1.substr(i * 2, 2);
+                var byte2 = pattern2.substr(i * 2, 2);
+                var byte = parseInt(byte1, 16) | parseInt(byte2, 16);
+                byte = byte.toString(16);
+                byte = ('0' + byte).substr(-2);
+                out.push(byte);
+            }
+            return out.join('');
+        },
+        xor: function (pattern1, pattern2) {
+            var out = [];
+            for (var i = 0; i < 8; i++) {
+                var byte1 = pattern1.substr(i * 2, 2);
+                var byte2 = pattern2.substr(i * 2, 2);
+                var byte = parseInt(byte1, 16) ^ parseInt(byte2, 16);
+                byte = byte.toString(16);
+                byte = ('0' + byte).substr(-2);
+                out.push(byte);
+            }
+            return out.join('');
+        },
+        and: function (pattern1, pattern2) {
+            var out = [];
+            for (var i = 0; i < 8; i++) {
+                var byte1 = pattern1.substr(i * 2, 2);
+                var byte2 = pattern2.substr(i * 2, 2);
+                var byte = parseInt(byte1, 16) & parseInt(byte2, 16);
+                byte = byte.toString(16);
+                byte = ('0' + byte).substr(-2);
+                out.push(byte);
+            }
+            return out.join('');
+        }
+    }
+
+    $('#rotate-button').click(function () {
+        cachePattern();
+        $hexInput.val(patternTool.rotate(getInputHexValue(), true));
+        hexInputToLeds();
     });
 
     $('#invert-button').click(function () {
@@ -237,50 +414,138 @@ $(function () {
     });
 
     $('#shift-up-button').click(function () {
-        var val = '00' + getInputHexValue().substr(0, 14);
-        $hexInput.val(val);
+        cachePattern();
+        $hexInput.val(patternTool.up(getInputHexValue()));
         hexInputToLeds();
     });
 
     $('#shift-down-button').click(function () {
-        var val = getInputHexValue().substr(2, 14) + '00';
-        $hexInput.val(val);
+        cachePattern();
+        $hexInput.val(patternTool.down(getInputHexValue()));
         hexInputToLeds();
     });
 
     $('#shift-right-button').click(function () {
-        var val = getInputHexValue();
-
-        var out = [];
-        for (var i = 0; i < 8; i++) {
-            var byte = val.substr(i * 2, 2);
-            byte = parseInt(byte, 16);
-            byte <<= 1;
-            byte = byte.toString(16);
-            byte = ('0' + byte).substr(-2);
-            out.push(byte);
-        }
-        val = out.join('');
-        $hexInput.val(val);
+        cachePattern();
+        $hexInput.val(patternTool.right(getInputHexValue()));
         hexInputToLeds();
     });
 
     $('#shift-left-button').click(function () {
-        var val = getInputHexValue();
-
-        var out = [];
-        for (var i = 0; i < 8; i++) {
-            var byte = val.substr(i * 2, 2);
-            byte = parseInt(byte, 16);
-            byte >>= 1;
-            byte = byte.toString(16);
-            byte = ('0' + byte).substr(-2);
-            out.push(byte);
-        }
-        val = out.join('');
-        $hexInput.val(val);
+        cachePattern();
+        $hexInput.val(patternTool.left(getInputHexValue()));
         hexInputToLeds();
     });
+
+    var patternClipboard = 0;
+    var patternHistory = [];
+    function cachePattern() {
+        patternHistory.push($hexInput.val());
+        while (patternHistory.length > 50) {
+            patternHistory.shift();
+        }
+    }
+
+    $leds.keydown(function (e) {
+        if (e.keyCode == 39) {  // arrow right
+            cachePattern();
+            if (e.ctrlKey) {
+                $hexInput.val(patternTool.rotate(getInputHexValue(), true));
+                hexInputToLeds();
+            } else {
+                $hexInput.val(patternTool.right(getInputHexValue(), e.shiftKey));
+                hexInputToLeds();
+            }
+        } else if (e.keyCode == 37) {  // arrow left
+            cachePattern();
+            if (e.ctrlKey) {
+                $hexInput.val(patternTool.rotate(getInputHexValue(), false));
+                hexInputToLeds();
+            } else {
+                $hexInput.val(patternTool.left(getInputHexValue(), e.shiftKey));
+                hexInputToLeds();
+            }
+        } else if (e.keyCode == 38) {  // arrow up
+            cachePattern();
+            if (e.ctrlKey) {
+                $hexInput.val(patternTool.flipV(getInputHexValue()));
+                hexInputToLeds();
+            } else {
+                $hexInput.val(patternTool.up(getInputHexValue(), e.shiftKey));
+                hexInputToLeds();
+            }
+        } else if (e.keyCode == 40) {  // arrow down
+            cachePattern();
+            if (e.ctrlKey) {
+                $hexInput.val(patternTool.flipV(getInputHexValue()));
+                hexInputToLeds();
+            } else {
+                $hexInput.val(patternTool.down(getInputHexValue(), e.shiftKey));
+                hexInputToLeds();
+            }
+        } else if (e.keyCode == 67 && e.ctrlKey) {  // Ctrl-C
+            patternClipboard = getInputHexValue();
+        } else if (e.keyCode == 86 && e.ctrlKey) {  // Ctrl-V
+            cachePattern();
+            var val;
+            if (e.shiftKey) {
+                val = patternTool.xor(getInputHexValue(), patternClipboard);
+            } else {
+                val = patternTool.or(getInputHexValue(), patternClipboard);
+            }
+            $hexInput.val(val);
+            hexInputToLeds();
+        } else if (e.keyCode == 90 && e.ctrlKey) {  // Ctrl-Z
+            $hexInput.val(patternHistory.pop());
+            hexInputToLeds();
+        } else if (e.keyCode == 33) {  // page up
+            if (e.altKey) {
+                var $thisFrame = $frames.find('.frame.selected').first();
+                var $prevFrame = $thisFrame.prev('.frame');
+                if ($prevFrame.length) {
+                    $prevFrame.before($thisFrame);
+                    saveState();
+                }
+            } else {
+                var $prevFrame = $frames.find('.frame.selected').first().prev('.frame');
+                if ($prevFrame.length) {
+                    $hexInput.val($prevFrame.attr('data-hex'));
+                    focusToFrame($prevFrame);
+                    hexInputToLeds();
+                }
+            }
+        } else if (e.keyCode == 34) {  // page down
+            if (e.altKey) {
+                var $thisFrame = $frames.find('.frame.selected').first();
+                var $nextFrame = $thisFrame.next('.frame');
+                if ($nextFrame.length) {
+                    $nextFrame.after($thisFrame);
+                    saveState();
+                }
+            } else {
+                var $nextFrame = $frames.find('.frame.selected').first().next('.frame');
+                if ($nextFrame.length) {
+                    $hexInput.val($nextFrame.attr('data-hex'));
+                    focusToFrame($nextFrame);
+                    hexInputToLeds();
+                }
+            }
+        } else if (e.keyCode == 32) {  // space
+            $("#play-button").click();
+        } else if (e.keyCode == 13) {  // enter
+            if (e.ctrlKey) {
+                $updateButton.click();
+            } else {
+                $insertButton.click();
+            }
+        } else if (e.keyCode == 46) {  // delete
+            $deleteButton.click();
+        } else {
+            return;
+        }
+        e.preventDefault();
+    });
+
     $runAnimationButton.click(function (){
         var params = 'pattern=' + savedHashState+ '&delay=' + $('#play-delay-input').val();
         var xhttp = new XMLHttpRequest();
@@ -373,21 +638,33 @@ $(function () {
     inputElement.dispatchEvent(new MouseEvent("click")); 
     });
 
-    $cols.find('.item').mousedown(function () {
+    $cols.find('.item').mousedown(function (e) {
+        cachePattern();
         var col = $(this).attr('data-col');
-        $leds.find('.item[data-col=' + col + ']').toggleClass('active',
-            $leds.find('.item[data-col=' + col + '].active').length != 8);
+        if (e.shiftKey) {
+            $leds.find('.item[data-col=' + col + ']').toggleClass('active');
+        } else {
+            $leds.find('.item[data-col=' + col + ']').toggleClass('active',
+                $leds.find('.item[data-col=' + col + '].active').length != 8);
+        }
         ledsToHex();
     });
 
-    $rows.find('.item').mousedown(function () {
+    $rows.find('.item').mousedown(function (e) {
+
+        cachePattern();
         var row = $(this).attr('data-row');
-        $leds.find('.item[data-row=' + row + ']').toggleClass('active',
-            $leds.find('.item[data-row=' + row + '].active').length != 8);
+        if (e.shiftKey) {
+            $leds.find('.item[data-row=' + row + ']').toggleClass('active');
+        } else {
+            $leds.find('.item[data-row=' + row + ']').toggleClass('active',
+                $leds.find('.item[data-row=' + row + '].active').length != 8);
+        }
         ledsToHex();
     });
 
     $hexInput.keyup(function () {
+        cachePattern();
         hexInputToLeds();
     });
 
@@ -450,9 +727,14 @@ $(function () {
         $rows.find('.item').removeClass('hover');
     });
 
-    $('#matrix-toggle').mousedown(function () {
+    $('#matrix-toggle').mousedown(function (e) {
+        cachePattern();
         var col = $(this).attr('data-col');
-        $leds.find('.item').toggleClass('active', $leds.find('.item.active').length != 64);
+        if (e.shiftKey) {
+            $leds.find('.item').toggleClass('active');
+        } else {
+            $leds.find('.item').toggleClass('active', $leds.find('.item.active').length != 64);
+        }
         ledsToHex();
     });
 
@@ -536,4 +818,5 @@ $(function () {
 
     setPageTheme(pageTheme);
 
+    $leds.focus();
 });
