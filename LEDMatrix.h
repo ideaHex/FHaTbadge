@@ -37,18 +37,20 @@ SOFTWARE.
 #define animationMode 0
 #define textScrollMode 1
 #define staticMode 3
+#define matrixWaterfall 4
+#define displayFireMode 5
 
 class LEDMatrix{
     public:
-        LEDMatrix();
-        void clearMatrix();
+        LEDMatrix(void);
+        void clearMatrix(void);
         ICACHE_RAM_ATTR void T1IntHandler();
         void setMatrix(uint64_t IMAGE, int angle);
         void setMatrix(uint64_t* IMAGE, int angle);
         uint64_t rotateCW(uint64_t IMAGE);
-        void scroll();
+        void scroll(void);
         void createAnimation(uint64_t IMAGE,int frameNumber, unsigned long currentDelay);
-        void update();
+        void update(void);
         void setMode(int newMode);
         void newScrollText(String newText);
 
@@ -59,6 +61,11 @@ class LEDMatrix{
     private:
         ICACHE_RAM_ATTR void fastDigitalWrite(int pin,bool State);
         void animate(void);
+        void displayMatrix();
+        void convertIMAGEFromLastFHaTBadge();
+        void displayFire(int fadeamt, int seedchance);
+        int PctChance(int chance);
+        void clearDisplay(void);
 
         volatile uint8_t currentRow = 0;
         const uint8_t Latch = D8;
@@ -75,6 +82,10 @@ class LEDMatrix{
         int currentAnimationDelay=75;
         uint8_t currentFrame=0;
         int mode = textScrollMode;
+        #define NUM_ROW 8
+        #define NUM_COL 8
+        uint8_t display[NUM_ROW][NUM_COL];
+        uint8_t lastMode = mode;
 };
 
     static uint64_t matrixFont[] = {

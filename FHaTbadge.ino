@@ -67,7 +67,7 @@ void setup(){
     setupWiFi();                    //setup wifi
     
     scrollTest(F("Flinders & Hackerspace at Tonsley"),85);// test scroll function
-    
+
     #ifdef DIAG
     Serial.println(F("\r\nSetup Complete"));
     rst_info *resetInfo;
@@ -101,6 +101,7 @@ void scrollTest(String text,unsigned long frameDelay){
   matrix.setMode(textScrollMode);
   animationTimer.attach_ms(frameDelay,animationCallback);
 }
+
 void animationCallback(){
   matrix.update();
 }
@@ -122,10 +123,23 @@ void setupWiFi(){
   server.on("/save", handleSave);
   server.on("/text", handleScrollingText);
   server.on("/directory", handleLoad);
+  server.on("/waterfall", handelMatrixWaterfall);
+  server.on("/fireEffect", handleFireEffect);
 	server.onNotFound(handleNotFound);
 	server.begin();
 }
 // server callbacks
+void handleFireEffect(){
+  animationTimer.detach();
+  matrix.setMode(displayFireMode);
+  animationTimer.attach_ms(70,animationCallback);
+}
+void handelMatrixWaterfall(){
+  server.send(204,"HTTP/1.1","NO CONTENT");
+  animationTimer.detach();
+  matrix.setMode(matrixWaterfall);
+  animationTimer.attach_ms(48,animationCallback);
+}
 void handleScrollingText(){
   matrix.newScrollText(server.arg("scrollText"));
   animationTimer.detach();

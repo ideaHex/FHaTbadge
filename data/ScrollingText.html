@@ -43,20 +43,26 @@ SOFTWARE.
   <body>
   <table style="position:absolute;width:100%;top: 31%;"><tr><th style="width:31%"></th>
     <th style="width:33%"><span><br>
-  Scrolling Text:<br><br><input type='text' name='scrollText' placeholder='FHaTbadge' id="MyText"><br>
-  <br><br>
+  Scrolling Text:<br><br><input type='text' name='scrollText' placeholder='FHaTbadge' id="MyText" style="width:80%" onkeypress="submitOnEnter(this, event);"><br>
+  <br>
   <button onclick="myButton()">Submit<br></span></th>
     <th style="width:33%"></th>
     </tr>
     </table>
     <script>
+    document.getElementById("MyText").focus();
 	function myButton() {
         var params = 'scrollText=' + document.getElementById("MyText").value;
         var xhttp = new XMLHttpRequest();
         	xhttp.open("POST", "/text" , true);
-            xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+          xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         	xhttp.send(params);
     };
+    function submitOnEnter(inputElement, event) {
+        if (event.keyCode == 13) {
+          myButton();
+        }
+    }
 	</script>
 </body>
 </html>
