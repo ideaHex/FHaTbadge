@@ -57,14 +57,16 @@ SOFTWARE.
     </tr>
     <tr><th style="width:33%"></th><th><a href="ScrollingText.html"><button style="width:100%;height:50px;" title="Open scrolling text editor">Scrolling text</button></a></th><th style="width:33%"></th>
     </tr>
-    <tr><th style="width:33%"></th><th><button onclick="waterfall()" style="width:100%;height:50px;" title="Run matrix waterfall effect">Matrix waterfall</button></th><th style="width:33%"></th>
+    <tr><th style="width:33%"></th><th><button onclick="sendRequest('/waterfall')" style="width:100%;height:50px;" title="Run matrix waterfall effect">Matrix waterfall</button></th><th style="width:33%"></th>
+    </tr>
+    <tr><th style="width:33%"></th><th><button onclick="sendRequest('/fireEffect')" style="width:100%;height:50px;" title="Run fire effect">Fire effect</button></th><th style="width:33%"></th>
     </tr>
     </table>
     <script>
-      function waterfall(){
+      function sendRequest(data){
         var xhtp = new XMLHttpRequest();
-        var params = '/waterfall=' + "DummyData";
-        xhtp.open("POST", "/waterfall" , true);
+        var params = data+'=' + "DummyData";
+        xhtp.open("POST", data , true);
         xhtp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         xhtp.send(params);
       }

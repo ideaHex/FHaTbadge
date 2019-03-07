@@ -161,7 +161,7 @@ void LEDMatrix::animate(){
       currentFrame++;
       if (currentFrame > currentAnimationImagesNumberOfFrames) currentFrame = 0; //LOOP
 }
-void LEDMatrix::displayMatrix(int time, int dtime) {// matrix waterfall display
+void LEDMatrix::displayMatrix() {// matrix waterfall display
 
     bool shift = 0;
     scrollShift++;
@@ -187,6 +187,55 @@ void LEDMatrix::displayMatrix(int time, int dtime) {// matrix waterfall display
     }
   convertIMAGEFromLastFHaTBadge();
 }
+int LEDMatrix::PctChance(int chance) {
+	if (chance < 0)
+		chance = 0;
+	if (chance > 100)
+		chance = 100;
+	if (chance > byte(random(100)))
+		return 1;
+	else
+		return 0;
+}
+void LEDMatrix::displayFire(int fadeamt, int seedchance) {
+  uint8_t MIN_BRIGHT = 0,MAX_BRIGHT = 6;
+
+		for (int r = 0; r < NUM_ROW; r++) {
+			for (int c = 0; c < NUM_COL; c++) {
+				uint8_t rnd = byte(random(fadeamt));
+				uint8_t oldval = display[r + 1][c];
+				if (oldval == MIN_BRIGHT || oldval <= rnd)
+					display[r][c] = MIN_BRIGHT; // Old value is already off or will be due to fading
+				else
+					display[r][c] = oldval - rnd; // Fade the old value
+			}
+		}
+		// Seed new fire
+		for (int c = 0; c < NUM_COL; c++)
+			display[NUM_ROW - 1][c] = 0;
+		for (int c = 0; c < NUM_COL; c++) {
+			int bias = 0;
+			// Bias seedchance to make 2 "hot spots"
+			if (c == 1 || c == 2)
+				bias = 30;
+			if (c == 5 || c == 6)
+				bias = 30;
+			if (PctChance(seedchance + bias)) {
+				if (c > 1)
+					display[NUM_ROW - 1][c - 1] += MAX_BRIGHT - 3;
+				display[NUM_ROW - 1][c] += MAX_BRIGHT;
+				if (c < 7)
+
+					display[NUM_ROW - 1][c + 1] += MAX_BRIGHT - 3;
+			}
+		}
+		// Clip to maximum brightnes
+		for (int c = 0; c < NUM_COL; c++)
+			if (display[NUM_ROW - 1][c] > MAX_BRIGHT)
+				display[NUM_ROW - 1][c] = MAX_BRIGHT;
+
+  LEDMatrix::convertIMAGEFromLastFHaTBadge();
+}
 void LEDMatrix::convertIMAGEFromLastFHaTBadge(){
       uint64_t row=0;
       uint64_t currentMatrixImage=0;
@@ -204,24 +253,45 @@ void LEDMatrix::convertIMAGEFromLastFHaTBadge(){
           currentMatrix[matrixLevel] = currentMatrixImage;
       }
 }
+void LEDMatrix::clearDisplay(){
+  for(uint8_t r=0;r<8;r++){
+    for(uint8_t c=0;c<8;c++){
+      display[r][c] = 0;
+    }
+  }
+}
+
 void LEDMatrix::update(){
       switch(mode){
         case animationMode:
           animate();
+          lastMode = mode;
           break;
         case textScrollMode:
           scroll();
+          lastMode = mode;
           break;
 
         case staticMode:
-
+          lastMode = mode;
           break;
 
         case matrixWaterfall:
-          displayMatrix(10,125);
+          if (lastMode != mode){
+            lastMode = mode;
+            clearDisplay();
+          }
+          displayMatrix();
           break;
-
+        case displayFireMode:
+          if (lastMode != mode){
+            lastMode = mode;
+            clearDisplay();
+          }
+        displayFire(4, 40);
+        break;
         default:
+          lastMode = mode;
           break;
       }
 }

@@ -38,6 +38,7 @@ SOFTWARE.
 #define textScrollMode 1
 #define staticMode 3
 #define matrixWaterfall 4
+#define displayFireMode 5
 
 class LEDMatrix{
     public:
@@ -60,8 +61,11 @@ class LEDMatrix{
     private:
         ICACHE_RAM_ATTR void fastDigitalWrite(int pin,bool State);
         void animate(void);
-        void displayMatrix(int time, int dtime);
+        void displayMatrix();
         void convertIMAGEFromLastFHaTBadge();
+        void displayFire(int fadeamt, int seedchance);
+        int PctChance(int chance);
+        void clearDisplay(void);
 
         volatile uint8_t currentRow = 0;
         const uint8_t Latch = D8;
@@ -81,6 +85,7 @@ class LEDMatrix{
         #define NUM_ROW 8
         #define NUM_COL 8
         uint8_t display[NUM_ROW][NUM_COL];
+        uint8_t lastMode = mode;
 };
 
     static uint64_t matrixFont[] = {
