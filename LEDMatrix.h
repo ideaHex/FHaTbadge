@@ -39,6 +39,8 @@ SOFTWARE.
 #define staticMode 3
 #define matrixWaterfall 4
 #define displayFireMode 5
+#define fadeTextMode 6
+#define gameOfLifeMode 7
 
 class LEDMatrix{
     public:
@@ -53,6 +55,7 @@ class LEDMatrix{
         void update(void);
         void setMode(int newMode);
         void newScrollText(String newText);
+        void startGameOfLife(void);
 
         uint32_t ticks;
         String text;
@@ -66,6 +69,13 @@ class LEDMatrix{
         void displayFire(int fadeamt, int seedchance);
         int PctChance(int chance);
         void clearDisplay(void);
+        void fadeText(void);
+
+        uint8_t countNeighbors(uint8_t board[8][8], uint8_t row, uint8_t col);
+        boolean isCellAlive(uint8_t board[8][8], uint8_t row, uint8_t col);
+        void calculateNewGameBoard(uint8_t oldboard[8][8], uint8_t newboard[8][8]);
+        void swapGameBoards(uint8_t oldboard[8][8], uint8_t newboard[8][8]);
+        void DisplayConway(void);
 
         volatile uint8_t currentRow = 0;
         const uint8_t Latch = D8;
@@ -86,6 +96,9 @@ class LEDMatrix{
         #define NUM_COL 8
         uint8_t display[NUM_ROW][NUM_COL];
         uint8_t lastMode = mode;
+        
+    	uint8_t oldboard[NUM_ROW][NUM_COL] = { };
+	    uint8_t newboard[NUM_ROW][NUM_COL] = { };
 };
 
     static uint64_t matrixFont[] = {

@@ -234,7 +234,7 @@ void LEDMatrix::displayFire(int fadeamt, int seedchance) {
 			if (display[NUM_ROW - 1][c] > MAX_BRIGHT)
 				display[NUM_ROW - 1][c] = MAX_BRIGHT;
 
-  LEDMatrix::convertIMAGEFromLastFHaTBadge();
+  convertIMAGEFromLastFHaTBadge();
 }
 void LEDMatrix::convertIMAGEFromLastFHaTBadge(){
       uint64_t row=0;
@@ -260,7 +260,23 @@ void LEDMatrix::clearDisplay(){
     }
   }
 }
-
+void LEDMatrix::fadeText(){
+      if (scrollText == ""){                          // setup scrolling
+        scrollShift = 0;
+        scrollText = " ";
+        scrollText += text;
+        setMatrix(matrixFont[uint8_t(scrollText.charAt(0))-32],0);
+      }else{
+        if (scrollShift>7){
+          scrollShift = 0;
+          scrollText.remove(0,1);
+          if(scrollText.length()>0)
+          setMatrix(matrixFont[uint8_t(scrollText.charAt(0))-32],0);
+        }
+        currentMatrix[7-scrollShift] = 0;
+        scrollShift++;
+      }
+}
 void LEDMatrix::update(){
       switch(mode){
         case animationMode:
@@ -283,6 +299,7 @@ void LEDMatrix::update(){
           }
           displayMatrix();
           break;
+
         case displayFireMode:
           if (lastMode != mode){
             lastMode = mode;
@@ -290,6 +307,17 @@ void LEDMatrix::update(){
           }
         displayFire(4, 40);
         break;
+
+        case fadeTextMode:
+          lastMode = mode;
+          fadeText();
+        break;
+
+        case gameOfLifeMode:
+          lastMode = mode;
+          DisplayConway();
+        break;
+
         default:
           lastMode = mode;
           break;
@@ -297,4 +325,98 @@ void LEDMatrix::update(){
 }
 void LEDMatrix::setMode(int newMode){
       mode = newMode;
+}
+
+// Run Conway's game of life
+// http://brownsofa.org/blog/2010/12/30/arduino-8x8-game-of-life/
+/**
+ * Counts the number of active cells surrounding the specified cell.
+ * Cells outside the board are considered "off"
+ * Returns a number in the range of 0 <= n < 9
+ */
+uint8_t LEDMatrix::countNeighbors(uint8_t board[NUM_ROW][NUM_COL], uint8_t row, uint8_t col) {
+	uint8_t count = 0;
+	for (int rowDelta = -1; rowDelta <= 1; rowDelta++) {
+		for (int colDelta = -1; colDelta <= 1; colDelta++) {
+			// skip the center cell
+			if (!(colDelta == 0 && rowDelta == 0)) {
+				if (isCellAlive(board, rowDelta + row, colDelta + col)) {
+					count++;
+				}
+			}
+    }
+	}
+	return count;
+}
+/**
+ * Returns whether or not the specified cell is on.
+ * If the cell specified is outside the game board, returns false.
+ */
+boolean LEDMatrix::isCellAlive(uint8_t board[NUM_ROW][NUM_COL], uint8_t row, uint8_t col) {
+	if (row < 0 || col < 0 || row >= NUM_ROW || col >= NUM_COL) {
+		return false;
+	}
+	return (board[row][col] == 1);
+}
+/**
+ * Encodes the core rules of Conway's Game Of Life, and generates the next iteration of the board.
+ * Rules taken from wikipedia.
+ */
+void LEDMatrix::calculateNewGameBoard(uint8_t oldboard[NUM_ROW][NUM_COL], uint8_t newboard[NUM_ROW][NUM_COL]) {
+	for (uint8_t row = 0; row < NUM_ROW; row++) {
+		for (uint8_t col = 0; col < NUM_COL; col++) {
+			uint8_t numNeighbors = countNeighbors(oldboard, row, col);
+			if (oldboard[row][col] && numNeighbors < 2) {
+				// Any live cell with fewer than two live neighbours dies, as if caused by under-population.
+				newboard[row][col] = false;
+			} else if (oldboard[row][col] && (numNeighbors == 2 || numNeighbors == 3)) {
+				// Any live cell with two or three live neighbours lives on to the next generation.
+				newboard[row][col] = true;
+			} else if (oldboard[row][col] && numNeighbors > 3) {
+				// Any live cell with more than three live neighbours dies, as if by overcrowding.
+				newboard[row][col] = false;
+			} else if (!oldboard[row][col] && numNeighbors == 3) {
+				// Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+				newboard[row][col] = true;
+			} else {
+				// All other cells will remain off
+				newboard[row][col] = false;
+			}
+		}
+	}
+}
+// Copy newboard to oldboard
+void LEDMatrix::swapGameBoards(uint8_t oldboard[NUM_ROW][NUM_COL], uint8_t newboard[NUM_ROW][NUM_COL]) {
+	for (uint8_t row = 0; row < NUM_ROW; row++) {
+		for (uint8_t col = 0; col < NUM_COL; col++) {
+			oldboard[row][col] = newboard[row][col];
+		}
+	}
+}
+void LEDMatrix::startGameOfLife(){
+  // Conway Life boards
+        uint8_t board1[NUM_ROW][NUM_COL] = {
+	        { 0, 0, 0, 0, 0, 0, 0, 0 },
+	        { 0, 0, 1, 1, 0, 0, 0, 0 },
+	        { 0, 1, 1, 0, 0, 0, 0, 0 },
+	        { 0, 0, 1, 0, 0, 0, 0, 0 },
+	        { 0, 0, 0, 0, 0, 0, 0, 0 },
+	        { 0, 0, 0, 0, 0, 0, 0, 0 },
+	        { 0, 0, 0, 0, 0, 0, 0, 0 },
+	        { 0, 0, 0, 0, 0, 0, 0, 0 }
+        };
+  memcpy(oldboard, board1, sizeof(oldboard));
+}
+void LEDMatrix::DisplayConway() {
+		for (uint8_t row = 0; row < NUM_ROW; row++) {
+			for (uint8_t col = 0; col < NUM_COL; col++) {
+				if (oldboard[row][col])
+					display[row][col] = 7;
+				else
+					display[row][col] = 0;
+			}
+		}
+    convertIMAGEFromLastFHaTBadge();
+		calculateNewGameBoard(oldboard, newboard);
+		swapGameBoards(oldboard, newboard);
 }
