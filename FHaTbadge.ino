@@ -67,7 +67,6 @@ void setup(){
     setupWiFi();                    //setup wifi
     
     scrollTest(F("Flinders & Hackerspace at Tonsley"),85);// test scroll function
-
     #ifdef DIAG
     Serial.println(F("\r\nSetup Complete"));
     rst_info *resetInfo;
@@ -121,14 +120,21 @@ void setupWiFi(){
 	server.on("/", handleRoot);
   server.on("/pattern", handlePattern);
   server.on("/save", handleSave);
-  server.on("/text", handleScrollingText);
+  server.on("/text", handleText);
   server.on("/directory", handleLoad);
   server.on("/waterfall", handelMatrixWaterfall);
   server.on("/fireEffect", handleFireEffect);
+  server.on("/gameOfLife", handleGameOfLife);
 	server.onNotFound(handleNotFound);
 	server.begin();
 }
 // server callbacks
+void handleGameOfLife(){
+  matrix.startGameOfLife();
+  animationTimer.detach();
+  matrix.setMode(gameOfLifeMode);
+  animationTimer.attach_ms(125,animationCallback);
+}
 void handleFireEffect(){
   animationTimer.detach();
   matrix.setMode(displayFireMode);
@@ -140,13 +146,21 @@ void handelMatrixWaterfall(){
   matrix.setMode(matrixWaterfall);
   animationTimer.attach_ms(48,animationCallback);
 }
-void handleScrollingText(){
-  matrix.newScrollText(server.arg("scrollText"));
-  animationTimer.detach();
-  server.send(204,"HTTP/1.1","NO CONTENT");
-  matrix.setMode(textScrollMode);
-  animationTimer.attach_ms(75,animationCallback);
+void handleText(){
+  if (server.hasArg("scrollText")){
+    matrix.newScrollText(server.arg("scrollText"));
+    animationTimer.detach();
+    server.send(204,"HTTP/1.1","NO CONTENT");
+    matrix.setMode(textScrollMode);
+    animationTimer.attach_ms(75,animationCallback);
+  }else{
+    matrix.newScrollText(server.arg("fadeText"));
+    animationTimer.detach();
+    server.send(204,"HTTP/1.1","NO CONTENT");
+    matrix.setMode(fadeTextMode);
+    animationTimer.attach_ms(110,animationCallback);
   }
+}
 void handleSave(){
   server.send(204,"HTTP/1.1","NO CONTENT");
   String pattern = server.arg("saveData");
