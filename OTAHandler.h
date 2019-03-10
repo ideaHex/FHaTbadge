@@ -37,9 +37,11 @@ class HandleTheOTA{
         void saveAPData(String name2,String password2);
         void loadDatafile(const char* ESPname);
         void connectToAP();
+        boolean getAPMode();
 
     private:
         DNSServer* dnsServerH;
         const char* AP_NameH;
         const char* passwordH;
+        boolean inAPMode = false;
 };

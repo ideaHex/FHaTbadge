@@ -73,7 +73,7 @@ class LEDMatrix{
 
         uint8_t countNeighbors(uint8_t board[8][8], uint8_t row, uint8_t col);
         boolean isCellAlive(uint8_t board[8][8], uint8_t row, uint8_t col);
-        void calculateNewGameBoard(uint8_t oldboard[8][8], uint8_t newboard[8][8]);
+        void calculateNewGameBoard();
         void swapGameBoards(uint8_t oldboard[8][8], uint8_t newboard[8][8]);
         void DisplayConway(void);
 

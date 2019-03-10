@@ -28,3 +28,4 @@ SOFTWARE.
 
 void sendFile(String path, ESP8266WebServer * server);
 String getContentType(String path);
+void sendNoContent(ESP8266WebServer * server);

@@ -62,8 +62,12 @@ SOFTWARE.
                 WiFi.softAPConfig(apIP, apIP, subnet);
                 WiFi.softAP(AP_NameH, passwordH, channel, false);
                 dnsServerH->start(DNS_PORT, "*", apIP);
+                inAPMode = true;
 		        break;
 	        }
             delay(50);
         }
+    }
+    boolean HandleTheOTA::getAPMode(){
+        return inAPMode;
     }
