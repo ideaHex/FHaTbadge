@@ -65,7 +65,6 @@ void setup(){
     Serial.begin(115200);
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
-    
     scrollTest(F("Flinders & Hackerspace at Tonsley"),85);// test scroll function
     #ifdef DIAG
     Serial.println(F("\r\nSetup Complete"));
@@ -113,18 +112,19 @@ void setupWiFi(){
         WiFi.hostname(ESP8266Name);
     }
     otaHandler.connectToAP();
-    ArduinoOTA.setHostname(ESP8266Name);
-    ArduinoOTA.begin();
-
+    if (!otaHandler.getAPMode()){
+      ArduinoOTA.setHostname(ESP8266Name);
+      ArduinoOTA.begin();
+    }
   // setup server callbacks                 
-	server.on("/", handleRoot);
-  server.on("/pattern", handlePattern);
-  server.on("/save", handleSave);
-  server.on("/text", handleText);
-  server.on("/directory", handleLoad);
-  server.on("/waterfall", handelMatrixWaterfall);
-  server.on("/fireEffect", handleFireEffect);
-  server.on("/gameOfLife", handleGameOfLife);
+	server.on(F("/"), handleRoot);
+  server.on(F("/pattern"), handlePattern);
+  server.on(F("/save"), handleSave);
+  server.on(F("/text"), handleText);
+  server.on(F("/directory"), handleLoad);
+  server.on(F("/waterfall"), handelMatrixWaterfall);
+  server.on(F("/fireEffect"), handleFireEffect);
+  server.on(F("/gameOfLife"), handleGameOfLife);
 	server.onNotFound(handleNotFound);
 	server.begin();
 }
@@ -141,31 +141,31 @@ void handleFireEffect(){
   animationTimer.attach_ms(70,animationCallback);
 }
 void handelMatrixWaterfall(){
-  server.send(204,"HTTP/1.1","NO CONTENT");
+  sendNoContent(&server);
   animationTimer.detach();
   matrix.setMode(matrixWaterfall);
   animationTimer.attach_ms(48,animationCallback);
 }
 void handleText(){
-  if (server.hasArg("scrollText")){
-    matrix.newScrollText(server.arg("scrollText"));
+  if (server.hasArg(F("scrollText"))){
+    matrix.newScrollText(server.arg(F("scrollText")));
     animationTimer.detach();
-    server.send(204,"HTTP/1.1","NO CONTENT");
+    sendNoContent(&server);
     matrix.setMode(textScrollMode);
     animationTimer.attach_ms(75,animationCallback);
   }else{
-    matrix.newScrollText(server.arg("fadeText"));
+    matrix.newScrollText(server.arg(F("fadeText")));
     animationTimer.detach();
-    server.send(204,"HTTP/1.1","NO CONTENT");
+    sendNoContent(&server);
     matrix.setMode(fadeTextMode);
     animationTimer.attach_ms(110,animationCallback);
   }
 }
 void handleSave(){
-  server.send(204,"HTTP/1.1","NO CONTENT");
-  String pattern = server.arg("saveData");
-  String anDelay = server.arg("delay");
-  String fileName = "/" + server.arg("fileName");
+  sendNoContent(&server);
+  String pattern = server.arg(F("saveData"));
+  String anDelay = server.arg(F("delay"));
+  String fileName = "/" + server.arg(F("fileName"));
   if (!fileName.endsWith(".FHaT")) fileName += ".FHaT";
   //TODO: see if file already exists ie. SPIFFS.exists(path) , ask for overwrite etc ...
   
@@ -183,7 +183,7 @@ void handleSave(){
 }
 void handleLoad(){
   String fileName = "/";
-  fileName += "Directory";
+  fileName += F("Directory");
   File dataFile = SPIFFS.open(fileName, "w");
   Dir dir = SPIFFS.openDir("/");
   FSInfo fs_info;
@@ -198,10 +198,10 @@ void handleLoad(){
   sendFile(fileName,&server);
 }
 void handlePattern(){
-  server.send(204,"HTTP/1.1","NO CONTENT");
-  String pattern = server.arg("pattern");
+  sendNoContent(&server);
+  String pattern = server.arg(F("pattern"));
   uint8_t frameNumber=0;
-  String anDelay = server.arg("delay");
+  String anDelay = server.arg(F("delay"));
   unsigned long animationDelay = strtoul(anDelay.substring(0,8).c_str(),NULL,10);
   while (pattern.length()>10){
     uint64_t number = matrix.rotateCW(strtoull(pattern.substring(0,16).c_str(), NULL, 16));
@@ -214,10 +214,10 @@ void handlePattern(){
   animationTimer.attach_ms(animationDelay,animationCallback);
   }
 void handleRoot(){
-  if (server.hasArg("NAME") && server.arg("NAME") != "" && server.arg("PASSWORD") != "")
+  if (server.hasArg(F("NAME")) && server.arg(F("NAME")) != "" && server.arg(F("PASSWORD")) != "")
   {
-    sendFile("/restarting.html", &server);
-    otaHandler.saveAPData(server.arg("NAME"),server.arg("PASSWORD"));
+    sendFile(F("/restarting.html"), &server);
+    otaHandler.saveAPData(server.arg(F("NAME")),server.arg(F("PASSWORD")));
     delay(1000);
     ESP.restart();
   }

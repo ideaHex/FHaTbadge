@@ -362,7 +362,7 @@ boolean LEDMatrix::isCellAlive(uint8_t board[NUM_ROW][NUM_COL], uint8_t row, uin
  * Encodes the core rules of Conway's Game Of Life, and generates the next iteration of the board.
  * Rules taken from wikipedia.
  */
-void LEDMatrix::calculateNewGameBoard(uint8_t oldboard[NUM_ROW][NUM_COL], uint8_t newboard[NUM_ROW][NUM_COL]) {
+void LEDMatrix::calculateNewGameBoard() {
 	for (uint8_t row = 0; row < NUM_ROW; row++) {
 		for (uint8_t col = 0; col < NUM_COL; col++) {
 			uint8_t numNeighbors = countNeighbors(oldboard, row, col);
@@ -417,6 +417,6 @@ void LEDMatrix::DisplayConway() {
 			}
 		}
     convertIMAGEFromLastFHaTBadge();
-		calculateNewGameBoard(oldboard, newboard);
+		calculateNewGameBoard();
 		swapGameBoards(oldboard, newboard);
 }

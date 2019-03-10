@@ -67,3 +67,7 @@ String getContentType(String path) { // get content type
       else if (lowerPath.endsWith(".zip")) dataType = F("application/x-zip");
     return dataType;
   }
+
+void sendNoContent(ESP8266WebServer * server){
+  server->send(204,"HTTP/1.1","NO CONTENT");
+}
