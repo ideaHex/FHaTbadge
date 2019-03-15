@@ -28,6 +28,7 @@ SOFTWARE.
     uint8_t SW2_Pin = D2;
     uint8_t SW3_Pin = D3;
 
-    unsigned long frequency = 4000; // 4000 works well with wifi
+    # define MAX_TRANSMIT_POWER 13 // 0 - 20.5
+    unsigned long frequency = 4000; // row update frequency. 4000 works well with wifi
     unsigned long clockCyclesPerMs = ESP.getCpuFreqMHz()*1000000;
 

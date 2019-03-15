@@ -40,8 +40,8 @@ const char* ssidForAP = "home_network_name";            // home network name
 const char* passwordForAP = "home_network_password";    // home network password
 
 // ESP8266 name
-const char* ESP8266Name = "esp8266";
-// use http://esp8266.local to connect to webpage in your browser (may not work in EDGE or android devices)
+const char* ESP8266Name = "fhatbadge";
+// use http://fhatbadge.local to connect to webpage in your browser (may not work in EDGE or android devices)
 
 // name and password for connecting to ESP8266 as an Accesspoint
 const char *password = "12345678";  // This is the Wifi Password (only numbers and letters,  not . , |)
@@ -52,11 +52,16 @@ DNSServer dnsServer;
 HandleTheOTA otaHandler(&dnsServer,AP_Name,password);
 LEDMatrix matrix;
 Ticker animationTimer;
+Ticker powerSaver;
 ADC_MODE(ADC_VCC);  // to be able to read VCC
+WiFiEventHandler stationConnectedHandler;
+WiFiEventHandler stationDisconnectedHandler;
+byte clientsConnected = 0;
 
 #define DIAG        // comment out to turn of diagnostics
 
 void setup(){
+    WiFi.setOutputPower(MAX_TRANSMIT_POWER); // 0 - 20.5 this will effect station mode
     pinMode(SW1_Pin,INPUT_PULLUP);
     pinMode(SW2_Pin,INPUT_PULLUP);
     pinMode(SW3_Pin,INPUT_PULLUP);
@@ -66,6 +71,13 @@ void setup(){
     SPIFFS.begin();                 //start SPIFFS
     setupWiFi();                    //setup wifi
     scrollTest(F("Flinders & Hackerspace at Tonsley"),85);// test scroll function
+    // power saving
+    
+    if (otaHandler.getAPMode()) WiFi.setOutputPower(0.25); // 0 - 20.5
+    powerSaver.attach_ms(1000,powerOffAP);
+    stationConnectedHandler = WiFi.onSoftAPModeStationConnected(&onStationConnected);
+    stationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(&onStationDisconnected);
+
     #ifdef DIAG
     Serial.println(F("\r\nSetup Complete"));
     rst_info *resetInfo;
@@ -84,7 +96,41 @@ void setup(){
     Serial.println("VCC: " + String(ESP.getVcc()) + " V");
     #endif
     }
-
+void powerOffAP(){
+  powerSaver.detach();
+  
+  if (otaHandler.getAPMode()){// make sure its in AP Mode
+  WiFi.setOutputPower(0.25); // 0 - 20.5
+  powerSaver.attach_ms(5000,powerOnAP);
+  }
+  
+}
+void powerOnAP(){
+  powerSaver.detach();
+  WiFi.setOutputPower(MAX_TRANSMIT_POWER); // 0 - 20.5
+  powerSaver.attach_ms(180,powerOffAP);
+}
+void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt) {
+  char buf[20];
+  snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x",
+           evt.mac[0], evt.mac[1], evt.mac[2], evt.mac[3], evt.mac[4], evt.mac[5]);
+  Serial.println("station connected: " + String(buf));
+  powerSaver.detach();
+  WiFi.setOutputPower(MAX_TRANSMIT_POWER); // 0 - 20.5
+  clientsConnected++;
+}
+void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt) {
+  clientsConnected--;
+  char buf[20];
+  snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x",
+           evt.mac[0], evt.mac[1], evt.mac[2], evt.mac[3], evt.mac[4], evt.mac[5]);
+  Serial.println("station disconnected: " + String(buf));
+  Serial.println("Stations still connected: " + String(clientsConnected));
+  if (clientsConnected == 0){
+    WiFi.setOutputPower(0.25); // 0 - 20.5
+   powerSaver.attach_ms(300,powerOffAP);
+  }
+}
 void loop(){
     delay(1);                         // power saving in station mode drops power usage.
     ArduinoOTA.handle();              // handle OTA update requests.
