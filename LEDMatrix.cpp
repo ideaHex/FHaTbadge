@@ -121,7 +121,9 @@ void LEDMatrix::scroll(){
         scrollText = text;
         scrollText +=" ";
         setMatrix(uint64_t(0),0);
-        uint64_t nextLetter = rotateCW(matrixFont[uint8_t(scrollText.charAt(0))-32]);
+        uint64_t nextLetter = 0;
+        if (uint8_t(scrollText.charAt(0)) > 31)
+        nextLetter = rotateCW(matrixFont[uint8_t(scrollText.charAt(0))-32]);
         for (int a=0;a<8;a++){
           nextMatrix[a] = nextLetter;
         }
@@ -135,7 +137,9 @@ void LEDMatrix::scroll(){
           scrollShift=0;
           if (scrollText !=""){
             scrollText.remove(0,1);
-            uint64_t nextLetter = rotateCW(matrixFont[uint8_t(scrollText.charAt(0))-32]);
+            uint64_t nextLetter = 0;
+            if (uint8_t(scrollText.charAt(0)) > 31)
+            nextLetter = rotateCW(matrixFont[uint8_t(scrollText.charAt(0))-32]);
             for (int b=0;b<8;b++){
               nextMatrix[b] = nextLetter;
             }
@@ -265,13 +269,20 @@ void LEDMatrix::fadeText(){
         scrollShift = 0;
         scrollText = " ";
         scrollText += text;
-        setMatrix(matrixFont[uint8_t(scrollText.charAt(0))-32],0);
+        uint64_t nextLetter = 0;
+        if (uint8_t(scrollText.charAt(0)) > 31)
+        nextLetter = matrixFont[uint8_t(scrollText.charAt(0))-32];
+        setMatrix(nextLetter,0);
       }else{
         if (scrollShift>7){
           scrollShift = 0;
           scrollText.remove(0,1);
-          if(scrollText.length()>0)
-          setMatrix(matrixFont[uint8_t(scrollText.charAt(0))-32],0);
+          if(scrollText.length()>0){
+            uint64_t nextLetter = 0;
+            if (uint8_t(scrollText.charAt(0)) > 31)
+            nextLetter = matrixFont[uint8_t(scrollText.charAt(0))-32];
+            setMatrix(nextLetter,0);
+          }
         }
         currentMatrix[7-scrollShift] = 0;
         scrollShift++;
